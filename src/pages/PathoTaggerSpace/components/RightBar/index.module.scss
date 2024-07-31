@@ -1,0 +1,136 @@
+.rightBar {
+  width: 100%;
+  height: 100%;
+  // background-color: green;
+  // margin: 100px;
+  .innerContainer{
+    width:100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid #eaf2f4;
+    background-color: #f5f9fa;
+    padding: 5px 10px;  
+    border-radius: 5px;
+  }
+    .partContainer {
+      margin-bottom: 10px;
+      .partTitle {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 550;
+        border-bottom: 1px solid #eaf2f4;
+      }
+      .subTitle {
+        font-weight: 550;
+        margin: 10px 0;
+        font-size: 16px;
+      }
+      .subSubTitle {
+        margin: 10px 0;
+        font-size: 14px;
+      }
+      .illustrate {
+        font-size: 12px;
+        margin-left: 5px;
+        color: #2185d0;
+        text-decoration: underline;
+      }
+      .illustrate:hover {
+        color: #2185d0;
+      }
+      .illustrate:visited {
+        color: inherit; /* 继承父元素的颜色 */
+        text-decoration: none; /* 去除下划线 */
+      }
+      .btnCtrlWrap {
+        color: #fff;
+        width: 50px;
+        height: 48px;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-align: center;
+        //margin-top: 10px;
+      }
+      .btnDrawWrap {
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-align: center;
+        //margin-top: 10px;
+      }
+      .pathBtnWrap {
+        color: #fff;
+        height: 50px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 10px;
+        .pathDesc {
+          flex: 1;
+          border-left: 1px solid rgba(255, 255, 255, 0.3);
+          padding-left: 10px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+        }
+      }
+      .selectEntity {
+        box-sizing: border-box;
+        max-height: 300px;
+        overflow: auto;
+        .entityWrap {
+          display: flex;
+          justify-content: space-around;
+          flex-wrap: wrap;
+          .entityItemWrap {
+            cursor: pointer;
+            margin: 5px 1px;
+            padding: 5px 0;
+            align-items: center;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 2px 2px rgba(85, 85, 85, 0.1);
+            &:hover {
+              box-shadow: 0 3px 2px rgba(85, 85, 85, 0.2);
+            }
+          }
+        }
+      }
+    }
+  .iconBtnWrap {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    // padding: 20px 0;
+  }
+}
+
+.noticeList{
+  margin: 0;
+  .noticeTitle {
+    margin-bottom: 10px ;
+    font-size: 25px;
+    font-weight: 600;
+  }
+  .noticeSubTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 550;
+  }
+  .notice {
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+}

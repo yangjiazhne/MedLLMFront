@@ -1,0 +1,53 @@
+@import '@/styles/variables.scss';
+
+.navbarWrap {
+  background-color: $navbarBgColor;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: auto;
+  .navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 1000px;
+    margin: auto;
+    padding: 10px 0;
+    color: #fff;
+    .backIcon {
+      margin-left: -30px;
+      margin-right: 20px;
+      cursor: pointer;
+      font-size: 22px;
+    }
+    .navbarTitleWrap {
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-start;
+      .navbarTitle {
+        font-weight: 500;
+        font-size: 25px;
+      }
+      .navbarIcon {
+        margin: 10px 0 0 10px;
+        cursor: pointer;
+      }
+    }
+  }
+  .navbarMenu {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    color: #fff;
+    margin-right: 60px;
+    .navbarMenuItem {
+      // border: 5px solid red;
+      margin: 0 10px;
+      cursor: pointer;
+      &:hover {
+        color: #087b90;
+      }
+    }
+  }
+
+}

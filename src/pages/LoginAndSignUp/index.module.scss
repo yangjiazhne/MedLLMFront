@@ -1,0 +1,52 @@
+.loginWrap {
+    display: flex;
+    width: 1000px;
+    margin: auto;
+    padding: 100px 0;
+    .leftText {
+        margin-right: 80px;
+        display: flex;
+        flex-direction: column;
+        &>:nth-child(1){
+            font-size: 3em;
+            font-weight: 700;
+        }
+        &>:nth-child(2){
+            font-size: 1.4em;
+            color: rgba(0,0,0,.87);
+            margin: 15px 0;
+        }
+        &>:nth-child(3){
+            font-size: 0.8em;
+            color: lightslategray;
+        }
+    }
+    .rightPanel {
+       background: black; 
+       border: 1px solid lightslategray;
+       box-shadow: lightslategrey -1px 1px, lightslategrey -2px 2px, lightslategrey -3px 3px, lightslategrey -4px 4px, lightslategrey -5px 5px;
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       padding: 40px 20px 80px 20px;
+       color: #fff;
+       .title {
+           font-weight: 700;
+           color: #fff;
+           font-size: 1.7rem;
+           margin-bottom: 15px;
+       }
+       .inlineForm {
+           display: flex;
+           color: hsla(0,0%,100%,.9);
+           font-size: 1em;
+           font-weight: 700;
+           text-align: center;
+       }
+       .blockForm {
+           margin-bottom: 10px;
+           color: hsla(0,0%,100%,.9);
+           text-align: center;
+       }
+    }
+}

@@ -10,27 +10,25 @@ import { getModelList } from '@/request/actions/task'
 import { useDispatch, useSelector } from 'react-redux'
 import { getInferResult, getPathoSegRef } from '@/request/actions/tagger'
 import { getUidToken } from '@/helpers/dthelper'
-import { controls, iconBtns, shapes, segAlgos, desTra, desInte, desInfer } from './config'
-import { renderModelInfer } from './help'
+import { iconBtns, shapes, controls, colors } from './config'
 import styles from './index.module.scss'
 import {
-  Slider,
   Select,
   Tag,
   Input,
-  Tooltip,
+  Checkbox,
   Modal,
   Divider,
-  Button,
-  notification,
-  Carousel,
-  Drawer,
   message,
+  Popover
 } from 'antd'
 import { ExclamationCircleOutlined, CloseOutlined } from '@ant-design/icons'
-import { hitShapeTypes, traPathGenerateWay, intePathGenerateWay, taskTypes } from '@/constants'
+import { taskTypes, contorlTypes, hitShapeTypeLabels, hitShapeTypes} from '@/constants'
 import { arraysEqualIgnoreOrder } from '@/helpers/Utils'
 import { VButton, VIcon } from '@/components'
+import { UPDATE_ISMUTITAG } from '@/redux/actionTypes'
+import { HexColorPicker } from "react-colorful";
+import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
 
 const { Option } = Select
 
@@ -38,37 +36,50 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
   const {
     projectHits, // 项目图片信息
     projectDetails, // 项目详情
-    entities, //
-    entityColorMap,
-    classifyInfo,
+    entities, 
     boundingBoxMap,
     strokeWidth,
+    currentColor,
     currentCanvas,
-    currentEntity,
     currentShape,
-    currentTraPathWay,
-    currentIntePathWay,
+    currentActiveObj,
+    currentViewer,
     currentControlType,
-    currentModelInfo,
     currentModelInference,
     pathoViewSize,
+    isMutiTag
   } = useSelector(
     // @ts-ignore
     state => state.project
   )
   const dispatch = useDispatch()
   const history = useHistory()
-
+  const { TextArea } = Input;
   const [modelList, setModelList] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
-
-  const [algorithmDesc, setAlgorithmDesc] = useState('')
-  const showDrawer = type => {
-    setAlgorithmDesc(type)
-  }
-  const onCloseDrawer = () => {
-    setAlgorithmDesc('')
-  }
+  const [customColor, setCustomColor] = useState('#d92bdd');
+  const [isCustomColor, setIsCustomColor] = useState(false)
+  const [colorPickerOpen, setColorPickerOpen] = useState(false)
+  const [taginfoValue, setTaginfoValue] = useState('')
+  const [isTagInfoModalOpen, setIsTagInfModalOpen] = useState(false);
+  const handleTagInfoModalOk = () => {
+    if(currentActiveObj.tagInfo){
+      currentActiveObj.tagInfo = taginfoValue
+    }else{
+      currentActiveObj.set('tagInfo', taginfoValue);
+    }
+    setIsTagInfModalOpen(false);
+    setTaginfoValue('')
+    // 取消选中所有对象
+    currentCanvas.discardActiveObject();
+    // 设置当前对象为选中状态
+    currentCanvas.setActiveObject(currentActiveObj);
+    // 重新渲染画布
+    currentCanvas.renderAll();
+  };
+  const handleColorPickerOpenChange = (newOpen) => {
+    setColorPickerOpen(newOpen);
+  };
 
   // 这里是获取模型列表的函数，暂时先不加入推理任务，前端先放在这里
   const fetchModelList = async () => {
@@ -96,6 +107,15 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
   useEffect(() => {
     fetchModelList()
   }, [projectDetails])
+
+  useEffect(() => {
+    if(isCustomColor){
+      dispatch({
+        type: 'UPDATE_CURRENT_COLOR',
+        payload: customColor,
+      })
+    }
+  }, [customColor])
 
   const clearAllObjects = () => {
     Modal.confirm({
@@ -156,52 +176,19 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
       payload: entities[0],
     })
   }
-  // 更新控制方式
-  const handleControlTypeChange = control => {
-    dispatch({
-      type: 'UPDATE_CURRENT_CONTROL_TYPE',
-      payload: control.value,
-    })
-  }
 
-  // const tagRender = props => {
-  //   const { label, closable, onClose } = props
-  //   const onPreventMouseDown = event => {
-  //     event.preventDefault()
-  //     event.stopPropagation()
-  //   }
-  //   return (
-  //     <Tag
-  //       color={entityColorMap[label]}
-  //       onMouseDown={onPreventMouseDown}
-  //       closable={closable}
-  //       onClose={onClose}
-  //       style={{ marginRight: 3 }}
-  //     >
-  //       {label}
-  //     </Tag>
-  //   )
-  // }
-
-  // 控制功能按钮生成方法
-  const BtnCtrlRender = ({ icon, label, onClick, active }) => {
-    return (
-      <div
-        style={{ backgroundColor: active ? '#2185d0' : 'grey', width: '50px' }}
-        onClick={onClick}
-        className={styles.btnCtrlWrap}
-      >
-        {icon}
-        <span style={{ marginTop: '3px', fontSize: '10px' }}>{label}</span>
-      </div>
-    )
+  const handelInfoValueChange = (event) => {
+    if(event && event.target && event.target.value){
+      let value = event.target.value;
+      setTaginfoValue(value)
+    }
   }
 
   // 绘制功能按钮生成方法
   const BtnDrawRender = ({ icon, label, title, onClick, active }) => {
     return (
       <div
-        style={{ backgroundColor: active ? '#2185d0' : 'grey', width: '40px' }}
+        style={{ backgroundColor: active ? '#25b0e5' : '#56677d', width: '40px' }}
         onClick={onClick}
         className={styles.btnDrawWrap}
         title={title}
@@ -212,313 +199,188 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
     )
   }
 
-  // 交互式算法标注按钮生成方法
-  const SegBtnDrawRender = ({ label, title, onClick, active }) => {
-    return (
-      <div
-        style={{ backgroundColor: active ? '#2185d0' : 'grey', width: '80px', height: '30px' }}
-        onClick={onClick}
-        className={styles.btnDrawWrap}
-        title={title}
-      >
-        <span style={{ fontSize: '14px' }}>{label}</span>
-      </div>
-    )
-  }
-
-  // 有关推理结果显示和选择的方法，目前没有完成
-  const renderInferResult = async () => {
-    Modal.confirm({
-      title: '提示',
-      icon: <ExclamationCircleOutlined />,
-      content: '病理图整图推理所需时间较长（40分钟左右），推理任务进度以任务形式展示，是否继续？',
-      okText: '是',
-      cancelText: '否',
-      onOk: async () => {
-        // 这里需要做成假的，首先要构造一个任务，显示一个假进度条
-        const { uid, token } = getUidToken()
-        const data = {
-          uid: uid,
-          modelName: currentModelInference,
-          datasetName: projectDetails.name,
-          projectId: projectDetails.id,
-          tasktype:
-            taskTypes[modelList?.find(model => model.modelName === currentModelInference)?.type]
-              ?.label,
-        }
-        const res = await getPathoSegRef(data)
-        if (res.err) {
-          message.error('推理任务创建失败: ' + res.data)
-        } else {
-          message.success('推理任务创建成功')
-          Modal.confirm({
-            title: '提示',
-            icon: <ExclamationCircleOutlined />,
-            content: '推理任务创建成功，是否前往任务中心查看任务进度？',
-            okText: '是',
-            cancelText: '否',
-            onOk: () => {
-              history.push(`/userHome/task-list`)
-            },
-          })
-        }
-      },
+  const onChangeMutiTag = (e) => {
+    dispatch({
+      type: 'UPDATE_ISMUTITAG',
+      payload: e.target.checked,
     })
   }
 
-  const getInferclass = () => {
-    //dispatch({
-    //  type: 'UPDATE_CURRENT_CLASSIFY_INFO',
-    //  payload: {
-    //    ...classifyInfo,
-    //   label: classRes.label,
-    //  },
-    //})
-    console.log('尚未完成')
+  const selectObjectById = (id) => {
+    // 查找具有指定 id 的对象
+    const targetObject = currentCanvas.getObjects().find(obj => obj.id === id);
+    // 如果找到了对象，则将其设置为选中状态
+    if (targetObject) {
+      // 取消选中所有对象
+      currentCanvas.discardActiveObject();
+      // 设置当前对象为选中状态
+      currentCanvas.setActiveObject(targetObject);
+      // 重新渲染画布
+      currentCanvas.renderAll();
+
+      const centerX = targetObject.left + targetObject.width / 2;
+      const centerY = targetObject.top + targetObject.height / 2;
+
+      const normalizedX = centerX / 1000;
+      const normalizedY = centerY / 1000;
+
+      currentViewer.viewport.panTo(new OpenSeadragon.Point(normalizedX, normalizedY));
+    } 
+  }
+
+  const deleteActiveObj = () => {
+    Modal.confirm({
+      title: '确认',
+      icon: <ExclamationCircleOutlined />,
+      content: '确定删除该标注吗？',
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => {
+        currentCanvas.remove(currentActiveObj).requestRenderAll()
+        // 维护boundingBoxMap数组
+        dispatch({
+          type: 'UPDATE_BOUNDING_BOX_MAP',
+          payload: boundingBoxMap.filter(box => box.id !== currentActiveObj.id),
+        })
+      },
+    })
   }
 
   return (
     <div className={styles.rightBar}>
       <div className={styles.innerContainer}>
-        <div className={styles.partContainer}>
+        <div className={styles.tagHeader}>
           <p className={styles.partTitle}>标注</p>
-          <CloseOutlined />
-          <p className={styles.subTitle}>画布控制</p>
-          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-            {controls.map(control => (
-              <BtnCtrlRender
-                key={control.label}
-                active={currentControlType === control.value}
-                icon={control.icon}
-                label={control.label}
-                onClick={() => handleControlTypeChange(control)}
-              />
-            ))}
-          </div>
-          <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
-          {true && (
+          <CloseOutlined onClick={()=>{setShowTagBox(false)}} style={{ fontSize: '20px' }}/>
+        </div>
+        <div className={styles.partContainer}>
+          <div className={styles.tagContainer}>
+            <div className={styles.shapeHeader}>
+              <p className={styles.shapeTitle}>标注方式</p>
+              <Checkbox checked={isMutiTag} onChange={onChangeMutiTag} style={{color: isMutiTag ? 'rgb(33, 133, 208)' : 'inherit', fontSize: '12px'}}>多次标注</Checkbox>
+            </div>
+            <div className={styles.iconBtnWrap}>
+              {shapes.map((shape, index) => (
+                <BtnDrawRender
+                  key={index}
+                  active={currentShape === shape.value}
+                  icon={shape.icon}
+                  label={shape.label}
+                  title={shape.title}
+                  onClick={() => {
+                    dispatch({
+                      type: 'UPDATE_CURRENT_SHAPE',
+                      payload: shape.value,
+                    })
+                    dispatch({
+                      type: 'UPDATE_CURRENT_CONTROL_TYPE',
+                      payload: contorlTypes.DEFAULT,
+                    })
+                  }}
+                />
+              ))}
+            </div>
+            <Divider style={{ marginTop: '10px', marginBottom: '0', backgroundColor: '#354052' }} />
             <div className={styles.selectEntity}>
-              <p className={styles.subTitle}>{space ? '选择类别' : '类别列表'}</p>
-              <Input
-                value={searchQuery}
-                onChange={event => setSearchQuery(event.target.value)}
-                placeholder="搜索类别标签"
-                allowClear
-              />
+              <p className={styles.subTitle}>选择颜色</p>
               <div className={styles.entityWrap}>
-                {Object.keys(entityColorMap).map((item, index) => {
-                  if (
-                    searchQuery.length === 0 ||
-                    item.toUpperCase().includes(searchQuery.toUpperCase())
-                  )
-                    return (
-                      <div
-                        className={styles.entityItemWrap}
-                        onClick={() => {
-                          if (space) {
-                            dispatch({
-                              type: 'UPDATE_CURRENT_ENTITY',
-                              payload: currentEntity !== item ? item : '',
-                            })
-                          }
-                        }}
-                        tabIndex={index}
-                        key={item}
-                        id={item}
+              {
+                colors.map((item, index) => (
+                  <div
+                    className={styles.entityItemWrap}
+                    tabIndex={index}
+                    key={item.value} 
+                    id={item.value} 
+                    style={{
+                      backgroundColor: `${currentColor === item.value && !isCustomColor ? '#25b0e5' : '#56677d'}`,
+                    }}
+                    onClick={()=>{
+                      setIsCustomColor(false)
+                      dispatch({
+                        type: 'UPDATE_CURRENT_COLOR',
+                        payload: item.value,
+                      })
+                    }}
+                  >
+                    <span style={{ backgroundColor: item.value, width: '14px', height: '14px', margin: 'auto 10px'}}>
+                    </span>
+                    {item.label}
+                  </div>
+                ))
+              }
+                <Popover
+                  content={<HexColorPicker color={customColor} onChange={setCustomColor}/>}
+                  trigger="click"
+                  placement="bottomLeft"
+                  open={colorPickerOpen}
+                  zIndex = {9999}
+                  onOpenChange={handleColorPickerOpenChange}
+                >
+                  <div className={styles.entityItemWrap} 
                         style={{
-                          backgroundColor: `${currentEntity === item ? '#2185d0' : 'white'}`,
+                          backgroundColor: `${currentColor === customColor && isCustomColor ? '#25b0e5' : '#56677d'}`,
                         }}
-                      >
-                        <Tag
-                          color={entityColorMap[item]}
-                          style={{ marginLeft: '5px', marginRight: '5px' }}
-                        >
-                          {item}
-                        </Tag>
-                      </div>
-                    )
-                })}
+                        onClick={()=>{
+                          setIsCustomColor(true)
+                          dispatch({
+                            type: 'UPDATE_CURRENT_COLOR',
+                            payload: customColor,
+                          })
+                        }}>
+                      <span style={{ backgroundColor: customColor, width: '14px', height: '14px', margin: 'auto 10px'}}>
+                      </span>
+                      自定义
+                  </div>
+                </Popover>
               </div>
             </div>
-          )}
-          {space && <Divider style={{ marginTop: '10px', marginBottom: '0' }} />}
-          {space && (
-            <>
-              <div>
-                <p className={styles.subTitle}>标注方式</p>
-                <p className={styles.subSubTitle}>手工标注</p>
-                <div className={styles.iconBtnWrap}>
-                  {shapes.map((shape, index) => (
-                    <BtnDrawRender
-                      key={index}
-                      active={currentShape === shape.value}
-                      icon={shape.icon}
-                      label={shape.label}
-                      title={shape.title}
-                      onClick={() =>
-                        dispatch({
-                          type: 'UPDATE_CURRENT_SHAPE',
-                          payload: shape.value,
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-                <p className={styles.subSubTitle}>
-                  交互式算法标注
-                  <a className={styles.illustrate} onClick={() => showDrawer('交互式算法标注')}>
-                    点击查看算法说明
-                  </a>
-                </p>
-                <div className={styles.iconBtnWrap}>
-                  {segAlgos.map((algorithm, index) => (
-                    <SegBtnDrawRender
-                      key={index}
-                      active={currentShape === algorithm.value && currentIntePathWay === algorithm.algo }
-                      label={algorithm.label}
-                      title={algorithm.title}
-                      onClick={() => {
-                        dispatch({
-                          type: 'UPDATE_CURRENT_INTEPATHWAY',
-                          payload: algorithm.algo,
-                        })
-                        dispatch({
-                          type: 'UPDATE_CURRENT_SHAPE',
-                          payload: algorithm.value,
-                        })
-                      }}
-                    />
-                  ))}
-                </div>
-                {/* <div
+          </div>
+          <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
+          <div className={styles.taggerList}>
+            <p className={styles.taggerListTitle}>标注列表</p>
+            <ul className={styles.taggerWrap}>
+              {currentCanvas.getObjects().map((annotation, index) => (
+                <li key={annotation.id} className={styles.taggerWrapItem}
                   style={{
-                    backgroundColor: currentShape === hitShapeTypes.INTEPATH ? '#2185d0' : 'grey',
+                    backgroundColor: `${currentActiveObj?.id === annotation.id ? '#6c809a' : '#56677d'}`,
                   }}
-                  className={styles.pathBtnWrap}
-                >
-                  <Select
-                    value={currentIntePathWay}
-                    bordered={false}
-                    style={{ color: '#fff', width: '120px' }}
-                    onChange={value => {
-                      dispatch({
-                        type: 'UPDATE_CURRENT_INTEPATHWAY',
-                        payload: value,
-                      })
-                      dispatch({
-                        type: 'UPDATE_CURRENT_SHAPE',
-                        payload: hitShapeTypes.INTEPATH,
-                      })
-                    }}
-                  >
-                    {Object.keys(intePathGenerateWay).map(key => (
-                      <Option value={intePathGenerateWay[key]} key={key}>
-                        {intePathGenerateWay[key]}
-                      </Option>
-                    ))}
-                  </Select>
-                  <div
-                    className={styles.pathDesc}
-                    onClick={() => {
-                      dispatch({
-                        type: 'UPDATE_CURRENT_SHAPE',
-                        payload: hitShapeTypes.INTEPATH,
-                      })
-                    }}
-                  >
-                    <VIcon type="icon-ManagePaths" style={{ marginRight: '5px' }} />
-                    分割算法
-                  </div>
-                </div> */}
-                {/* {modelList?.length > 0 && (
-                  <div>
-                    <p className={styles.subSubTitle}>
-                      智能算法自动标注
-                      <a
-                        className={styles.illustrate}
-                        onClick={() => showDrawer('智能算法自动标注')}
-                      >
-                        点击查看算法说明
-                      </a>
-                    </p>
-                    <div
-                      style={{
-                        backgroundColor:
-                          currentShape === hitShapeTypes.MODELINFERENCE ? '#2185d0' : 'grey',
-                      }}
-                      className={styles.pathBtnWrap}
-                    >
-                      <Select
-                        value={currentModelInference}
-                        bordered={false}
-                        style={{ color: '#fff', width: '120px' }}
-                        onChange={value => {
-                          dispatch({
-                            type: 'UPDATE_CURRENT_MODEL_INFERENCE',
-                            payload: value,
-                          })
-                          dispatch({
-                            type: 'UPDATE_CURRENT_SHAPE',
-                            payload: hitShapeTypes.MODELINFERENCE,
-                          })
-                        }}
-                      >
-                        {modelList?.map(key => (
-                          <Option value={key.modelName} key={key.modelName}>
-                            {key.modelName}
-                          </Option>
-                        ))}
-                      </Select>
-                      <div
-                        className={styles.pathDesc}
-                        onClick={() =>
-                          dispatch({
-                            type: 'UPDATE_CURRENT_SHAPE',
-                            payload: hitShapeTypes.MODELINFERENCE,
-                          })
-                        }
-                      >
-                        <VIcon type="icon-ManagePaths" style={{ marginRight: '5px' }} />
-                        {
-                          <div>
-                            {
-                              taskTypes[
-                                modelList?.find(model => model.modelName === currentModelInference)
-                                  ?.type
-                              ]?.label
-                            }
-                            算法
-                          </div>
-                        }
-                      </div>
+                  onClick={()=>{selectObjectById(annotation.id)}}>
+                  <p className={styles.taggerWrapItemContent}>
+                    <div>
+                      <span style={{marginRight: '20px'}}>{index + 1}</span>
+                      <span>{hitShapeTypeLabels[annotation.shape]}</span>
                     </div>
-                    {currentShape === hitShapeTypes.MODELINFERENCE && (
-                      <Button
-                        style={{ width: '70px', marginTop: '5px', padding: '0' }}
-                        onClick={renderInferResult}
-                      >
-                        开始推理
-                      </Button>
-                    )}{' '}
-                  </div>
-                )} */}
-              </div>
-            </>
-          )}
+                    <span className={styles.taggerWrapItemColor} style={{backgroundColor: annotation.color}}></span>
+                  </p>
+                  {currentActiveObj?.id === annotation.id && annotation.tagInfo &&
+                  <div className={styles.taggerWrapItemInfo}>{annotation.tagInfo}</div>}
+                  {currentActiveObj?.id === annotation.id && <p className={styles.taggerWrapItemOperate}>
+                    <span className={styles.taggerWrapItemDelete} onClick={deleteActiveObj}>
+                      <VIcon type="icon-shanchu" style={{ fontSize: '16px' }}/>
+                    </span>
+                    <span className={styles.taggerWrapItemText} onClick={()=>{setIsTagInfModalOpen(true)}}>
+                      <VIcon type="icon-wenben" style={{ fontSize: '14px', marginRight:'2px' }}/>
+                      备注
+                    </span>
+                  </p>}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <Drawer
-          title={algorithmDesc}
-          placement="right"
-          width={700}
-          bodyStyle={{ marginBottom: '20px' }}
-          onClose={onCloseDrawer}
-          visible={algorithmDesc}
-        >
-          {algorithmDesc === '传统算法标注' && desTra()}
-          {algorithmDesc === '交互式算法标注' && desInte()}
-          {algorithmDesc === '智能算法自动标注' && desInfer(modelList)}
-        </Drawer>
-        <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
+        <Modal title="标注信息" 
+              visible={isTagInfoModalOpen} 
+              onOk={handleTagInfoModalOk} 
+              onCancel={()=>{setIsTagInfModalOpen(false)}} 
+              destroyOnClose
+              okText="保存"
+              cancelText="取消">
+          <TextArea placeholder="请输入100字以内标注内容" 
+                    showCount 
+                    maxLength={100} 
+                    onChange={handelInfoValueChange}
+                    {...(currentActiveObj?.tagInfo ? { defaultValue: currentActiveObj.tagInfo } : {})}/>
+        </Modal>
         <div className={styles.iconBtnWrap}>
           {iconBtns(clearAllObjects, showReDoModal, saveRow, projectHits, space, isDone).map(
             (btn, index) => {
@@ -527,14 +389,14 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
                   <div
                     key={index}
                     style={{
-                      width: btn.width !== '' ? btn.width : '120px',
+                      width: btn.width !== '' ? btn.width : '100px',
                       marginBottom: '10px',
                       textAlign: 'center',
                     }}
                   >
                     <VButton
                       color={btn.color}
-                      style={{ width: '120px' }}
+                      style={{ width: '100px', padding: '0' }}
                       onClick={() => btn.onClick(history)}
                       disabled={btn.disabled}
                     >

@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { VIcon } from '@/components'
 import Draggable from 'react-draggable'; 
+import { hitShapeTypes, contorlTypes } from '@/constants'
 import {
   Card,
   Empty,
@@ -18,7 +19,7 @@ import {
   Popover,
   Radio,
 } from 'antd'
-import { HomeOutlined, LeftOutlined } from '@ant-design/icons'
+import { HomeOutlined, LeftOutlined, CloseOutlined } from '@ant-design/icons'
 
 import useQuery from '@/hooks/useQuery'
 import {
@@ -34,7 +35,7 @@ import { getTaskList } from '@/request/actions/task'
 import { imgUploadPre } from '@/constants'
 import { getCurrentResult, handleKeyDown, renderModelInfer } from './help'
 import styles from './PathoTaggerSpace.module.scss'
-import { RightBar, CanvasAnnotator, DoneTopBar } from './components'
+import { RightBar, CanvasAnnotator, DoneTopBar, SliceList } from './components'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 const PathoTaggerSpace = () => {
@@ -48,6 +49,7 @@ const PathoTaggerSpace = () => {
     // currentHit, //当前标记项
     // currentIndex, //当前标记项在历史hits中的index
     currentCanvas, //当前画布canvas
+    currentViewer,
     classifyInfo, //当前标记项的classification分类信息
     currentImgSize, //当前标记图片的大小
     pathoViewSize, //当前标记图片的视窗大小
@@ -68,9 +70,12 @@ const PathoTaggerSpace = () => {
   }) // 过滤条件
 
   const [showTagBox, setShowTagBox] = useState(false)
+  const [showSliceList, setShowSliceList] = useState(false)
+  const [showMoreList, setShowMoreList] = useState(false)
+  const [showSliceInfoBox, setShowSliceInfoBox] = useState(false)
 
   const currentInferPaths = useRef([]) // 当前的模型推理结果，临时存储，每次返回时都要先清空上一次的所有路径
-
+  const boundsRef = useRef(null);
   //获取所有需要的项目信息
   const fetchData = async () => {
     if (!filterValue.status) return
@@ -85,24 +90,38 @@ const PathoTaggerSpace = () => {
         payload: detailRes.data,
       })
 
-      var hitsData = []
-      if (filterValue.status === 'al') {
-        hitsData = (
-          await fetchPathoProjectHits(currentProjectPid, {
-            model: filterValue.model,
-            hitStatus: 'notDone',
-            hitResultStatus: 'al',
-          })
-        ).data.hits
-      } else {
-        hitsData = (
-          await fetchPathoProjectHits(currentProjectPid, {
-            model: filterValue.model,
-            hitStatus: filterValue.status,
-            hitResultStatus: filterValue.status,
-          })
-        ).data.hits
+      var hitsData = await fetchPathoProjectHits(currentProjectPid, {
+        model: 'human-annotation',
+        hitStatus: 'notDone',
+        hitResultStatus: 'notDone',
+      })
+      // 临时修改为按照done重新获取，后面要修改这个接口的后端，如果status是‘any’就无论是done还是notDone都能获取
+      if (hitsData.data.hits.length === 0) {
+        hitsData = await fetchPathoProjectHits(currentProjectPid, {
+          model: 'human-annotation',
+          hitStatus: 'done',
+          hitResultStatus: 'done',
+        })
       }
+      hitsData = hitsData.data.hits
+
+      // if (filterValue.status === 'al') {
+      //   hitsData = (
+      //     await fetchPathoProjectHits(currentProjectPid, {
+      //       model: filterValue.model,
+      //       hitStatus: 'notDone',
+      //       hitResultStatus: 'al',
+      //     })
+      //   ).data.hits
+      // } else {
+      //   hitsData = (
+      //     await fetchPathoProjectHits(currentProjectPid, {
+      //       model: filterValue.model,
+      //       hitStatus: filterValue.status,
+      //       hitResultStatus: filterValue.status,
+      //     })
+      //   ).data.hits
+      // }
 
       setProjectHitsFetchEnd(true)
 
@@ -172,6 +191,38 @@ const PathoTaggerSpace = () => {
   }, [queryInfo])
 
   useEffect(() => {
+    if(showSliceList){
+      setShowTagBox(false)
+      setShowMoreList(false)
+      setShowSliceInfoBox(false)
+    }
+  },[showSliceList])
+
+  useEffect(() => {
+    if(showTagBox){
+      setShowSliceList(false)
+      setShowMoreList(false)
+      setShowSliceInfoBox(false)
+    }
+  },[showTagBox])
+
+  useEffect(() => {
+    if(showMoreList){
+      setShowTagBox(false)
+      setShowSliceList(false)
+      setShowSliceInfoBox(false)
+    }
+  },[showMoreList])
+
+  useEffect(() => {
+    if(showSliceInfoBox){
+      setShowTagBox(false)
+      setShowSliceList(false)
+      setShowMoreList(false)
+    }
+  },[showSliceInfoBox])
+
+  useEffect(() => {
     fetchData()
     return () => {
       //  清除reduxproject状态
@@ -237,7 +288,16 @@ const PathoTaggerSpace = () => {
   }
 
   useEffect(() => {
-    console.log(showTagBox)
+    if(!showTagBox){
+      dispatch({
+        type: 'UPDATE_CURRENT_CONTROL_TYPE',
+        payload: contorlTypes.DRAG,
+      })
+      dispatch({
+        type: 'UPDATE_CURRENT_SHAPE',
+        payload: hitShapeTypes.NONE,
+      })
+    }
   }, [showTagBox])
 
   const handleNextRow = action => {
@@ -300,8 +360,8 @@ const PathoTaggerSpace = () => {
       )}
   
       {projectHitsFetchEnd && projectHits.length !== 0 && (
-        <div className={styles.container}>
-            <div className={styles.infoContainer}>
+        <div className={styles.container} ref={boundsRef}>
+            {/* <div className={styles.infoContainer}>
               <div slot="title">
                 <Button
                   icon
@@ -332,8 +392,10 @@ const PathoTaggerSpace = () => {
                   <HomeOutlined />
                 </Button>
               </div>
-            </div>
-          {showTagBox && <Draggable>
+            </div> */}
+          {showTagBox && 
+            <Draggable handle='.RightBar_tagHeader__2afYV'
+            bounds={boundsRef.current}>
             <div className={styles.tagBox}>
               <RightBar
                 modelName={filterValue.model} // 当前模型名称
@@ -345,6 +407,15 @@ const PathoTaggerSpace = () => {
               />
             </div>
           </Draggable>}
+          {showSliceList && (
+            <Draggable handle='.SliceList_sliceListHeader__2GecI'>
+              <div className={styles.SliceBox}>
+                <SliceList
+                  setShowSliceList={setShowSliceList}
+                />
+              </div>
+            </Draggable>
+          )}
           <div className={styles.viewContainer}>
             {projectHits.length !== 0 && pathoImgInfo.url !== '' && (
               <CanvasAnnotator
@@ -357,11 +428,88 @@ const PathoTaggerSpace = () => {
         </div>
       )}
 
+      <Popover
+        content={<div style={{width: '250px', backgroundColor: '#272b33', padding:'10px', color: '#fff'}}>
+          <p><b>切片信息 </b></p>
+          <Divider style={{ marginTop: '0', marginBottom: '5px', backgroundColor: '#354052' }} />
+          <p style={{ wordWrap: 'break-word', marginBottom: '4px' }}>
+            <b>文件名: </b>
+            {projectHits.length > 0 ? projectHits[0].data.split('/').pop() : 'temp'}
+          </p>
+          <p style={{ marginBottom: '4px' }}>
+            <b>图片宽高: </b>
+            {pathoImgInfo?.size?.width} x {pathoImgInfo?.size?.height}
+          </p>
+          <p style={{ marginBottom: '4px' }}>
+            <b>视窗内图片大小: </b>
+            {pathoViewSize.width} x {pathoViewSize.height}
+          </p>
+        </div>}
+        trigger="click"
+        overlayClassName={styles.morePop}
+        open={showSliceInfoBox}
+        placement="right"
+        onOpenChange={(newOpen)=>{setShowSliceInfoBox(newOpen)}}
+      >
+        <div className={styles.sliceInfo}>
+          <div onClick={()=>{setShowSliceInfoBox(!showSliceInfoBox)}} title='切片信息' className={styles.sliceInfoButton} 
+              style={{backgroundColor: `${showSliceInfoBox ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
+            <VIcon type="icon-binglixinxi" style={{ fontSize: '28px', marginTop:'10px' }}/>
+          </div>
+        </div>
+      </Popover>
       <div className={styles.biaozhu}>
-        <div onClick={()=>{setShowTagBox(!showTagBox)}} title='标注' className={styles.biaozhuButton}>
+        <div onClick={()=>{setShowTagBox(!showTagBox)}} title='标注' className={styles.biaozhuButton} 
+            style={{backgroundColor: `${showTagBox ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
           <VIcon type="icon-biaozhu" style={{ fontSize: '28px', marginTop:'8px' }}/>
         </div>
       </div>
+      <div className={styles.sliceList}>
+        <div onClick={()=>{setShowSliceList(!showSliceList)}} title='切片列表' className={styles.sliceListButton}
+            style={{backgroundColor: `${showSliceList ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
+          <VIcon type="icon-list" style={{ fontSize: '28px', marginTop:'10px' }}/>
+        </div>
+      </div>
+      <Popover
+        content={<div style={{display:'flex'}}>
+          <div onClick={() => {
+              const projectId = localStorage.getItem('currentProject')
+              history.push('/userHome/projects/' + projectId)
+            }}
+            title='返回上一页'
+            className={styles.moreListIcon}
+            style={{borderTopLeftRadius: '5px', borderBottomLeftRadius: '5px'}}>
+            <VIcon type="icon-pre" style={{ fontSize: '18px'}}/>
+          </div>
+          <div onClick={() => history.push('/userHome/my-projects')}
+              title='返回主界面'
+              className={styles.moreListIcon}>
+            <VIcon type="icon-home" style={{ fontSize: '18px'}}/>
+          </div>
+          <div onClick={() => {currentViewer.setFullScreen(true)}}
+              title='全屏'
+              className={styles.moreListIcon}
+              style={{borderTopRightRadius: '5px', borderBottomRightRadius: '5px'}}>
+            <VIcon type="icon-fullscreen" style={{ fontSize: '18px'}}/>
+          </div>
+        </div>}
+        trigger="click"
+        overlayClassName={styles.morePop}
+        open={showMoreList}
+        placement="right"
+        onOpenChange={(newOpen)=>{setShowMoreList(newOpen)}}
+      >
+        <div className={styles.moreList}>
+          <div onClick={()=>{setShowMoreList(!showMoreList)}} title='更多功能' className={styles.moreListButton}
+              style={{backgroundColor: `${showMoreList ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
+            <VIcon type="icon-more" style={{ fontSize: '28px', marginTop:'10px' }}/>
+          </div>
+        </div>
+      </Popover>
+      {/* <div className={styles.currentImgSize}>
+        <b>视窗内图片大小: </b>
+        {pathoViewSize.width} x {pathoViewSize.height}
+      </div> */}
     </Spin>
   )
 }

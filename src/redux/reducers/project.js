@@ -21,9 +21,14 @@ import {
   UPDATE_CURRENT_INTEPATHWAY,
   UPDATE_CURRENT_CONTROL_TYPE,
   UPDATE_CURRENT_IMAGE_SIZE,
+  UPDATE_CURRENT_COLOR,
+  UPDATE_CURRENT_ACTIVE_OBJ,
+  UPDATE_CURRENT_VIEWER,
+  UPDATE_CURRENT_GROUP,
   UPDATE_SEGPOSITIVE,
   UPDATE_SAMMODE,
   UPDATE_ISEDIT,
+  UPDATE_ISMUTITAG,
   UPDATE_THRESHOLD,
   UPDATE_CANNYTHRESHOLD,
   UPDATE_CURRENT_MODEL,
@@ -45,12 +50,14 @@ export const projectInitialState = {
   entityColorMap: {},
   currentHit: null, // 当前标记项
   currentEntity: '', // 当前选择的label类型
-  currentShape: hitShapeTypes.RECT, // 当前选择要绘制的shape【polygon/rectangle/point/line】
-  currentTraPathWay: traPathGenerateWay.GRABCUT, // 当前生成路径的方式
-  currentIntePathWay: intePathGenerateWay.SAMSEG,
+  currentShape: hitShapeTypes.NONE, // 当前选择要绘制的shape【polygon/rectangle/point/line】
   currentControlType: 'drag', // 当前画布的控制类型【default/drag】
   currentModelInference: '',
   currentIndex: 0, // 当前标记项在历史hits中的index
+  currentColor: '#ff0000',  //当前标记颜色
+  currentActiveObj: null,   //当前选中对象
+  currentViewer: null, //当前的viewer对象
+  currentGroup: '1',  //当前的组
   boundingBoxMap: [], // 当前标记项的标记信息（有可能属于全图，有可能属于切片）
   allBoundingBoxMap: [], // 当前标记图片的全图信息
   classifyInfo: {
@@ -90,6 +97,7 @@ export const projectInitialState = {
   circleRadius: 2, // 圆形半径
   SAMMode: 'point', //SAMSeg分割形式
   isEdit: false,
+  isMutiTag: false,
   cannyThreshold: [50, 100], // canny threshold
   threshold: [10, 30],
   currentModelInfo: {},
@@ -129,6 +137,26 @@ const project = function (state = projectInitialState, action) {
       return {
         ...state,
         projectModels: action.payload.models,
+      }
+    case UPDATE_CURRENT_COLOR:
+      return {
+        ...state,
+        currentColor: action.payload,
+      }
+    case UPDATE_CURRENT_ACTIVE_OBJ:
+      return {
+        ...state,
+        currentActiveObj: action.payload,
+      }
+    case UPDATE_CURRENT_VIEWER:
+      return {
+        ...state,
+        currentViewer: action.payload
+      }
+    case UPDATE_CURRENT_GROUP:
+      return {
+        ...state,
+        currentGroup: action.payload
       }
     case UPDATE_CURRENT_HITS:
       let _currentImgInfoRef = {
@@ -274,6 +302,11 @@ const project = function (state = projectInitialState, action) {
       return {
         ...state,
         isEdit: action.payload,
+      }
+    case UPDATE_ISMUTITAG:
+      return {
+        ...state,
+        isMutiTag: action.payload,
       }
     case UPDATE_CANNYTHRESHOLD:
       return {

@@ -26,7 +26,8 @@ export const getCurrentResult = currentCanvas => {
       id: item.id,
       type: item.type,
       shape: item.shape,
-      label: item.label,
+      color: item.color,
+      // label: item.label,
     }
 
     const actualLeft = item.left

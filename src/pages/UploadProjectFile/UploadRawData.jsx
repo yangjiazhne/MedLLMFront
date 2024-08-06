@@ -77,6 +77,9 @@ const UploadRawData = ({ handleUploadDone }) => {
           setUploadProcess(0)
         }}
       >
+        <Tabpane  tab="txt文件" key="txt" disabled={uploading}>
+
+        </Tabpane>
         <TabPane tab="图片文件" key="images" disabled={uploading}>
           <p style={{ opacity: '0.7', fontSize: '17px' }}>
             选择一张或多张（最多20张）图片 <br />

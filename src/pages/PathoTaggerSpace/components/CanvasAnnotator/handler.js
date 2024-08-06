@@ -1,6 +1,26 @@
 import { useDispatch, useSelector } from 'react-redux'
+import store from '@/redux/store'
+// @ts-ignore
+const fabric = window.fabric
 
-export const zoomHandler = (event, dispatch, setZooming, setSpotSize) => {
+export const zoomHandler = (event, dispatch, setZooming, setSpotSize, setPosition) => {
+  const { project } = store.getState()
+  const {
+    currentCanvas
+  } = project
+
+  const activeObject = currentCanvas.getActiveObject();
+  if (activeObject) {
+    const bl = activeObject.aCoords.bl
+    const _relativeBl = fabric.util.transformPoint(bl, currentCanvas.viewportTransform)
+    setPosition({
+      left: _relativeBl.x,
+      top: _relativeBl.y,
+      display: 'block',
+      type: activeObject.type,
+    })
+  }
+
   setZooming(true)
   const viewport = event.eventSource.viewport
 
@@ -45,7 +65,42 @@ export const zoomHandler = (event, dispatch, setZooming, setSpotSize) => {
   })
 }
 
-export const animationEndHandler = (event, dispatch, setZooming) => {
+export const animationHandler = (event, dispatch, setZooming, setPosition) => {
+  const { project } = store.getState()
+  const {
+    currentCanvas
+  } = project
+
+  const activeObject = currentCanvas.getActiveObject();
+  if (activeObject) {
+    const bl = activeObject.aCoords.bl
+    const _relativeBl = fabric.util.transformPoint(bl, currentCanvas.viewportTransform)
+    setPosition({
+      left: _relativeBl.x,
+      top: _relativeBl.y,
+      display: 'block',
+      type: activeObject.type,
+    })
+  }
+}
+
+export const animationEndHandler = (event, dispatch, setZooming, setPosition) => {
+  const { project } = store.getState()
+  const {
+    currentCanvas
+  } = project
+
+  const activeObject = currentCanvas.getActiveObject();
+  if (activeObject) {
+    const bl = activeObject.aCoords.bl
+    const _relativeBl = fabric.util.transformPoint(bl, currentCanvas.viewportTransform)
+    setPosition({
+      left: _relativeBl.x,
+      top: _relativeBl.y,
+      display: 'block',
+      type: activeObject.type,
+    })
+  }
   const viewport = event.eventSource.viewport
 
   // 根据当前放大倍数，调整视窗内图片大小

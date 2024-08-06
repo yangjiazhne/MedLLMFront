@@ -4,21 +4,21 @@ import '@/lib/fabric/fabric_eraser_brush'
 import { renderBoxMap, handleMultiPath } from './help'
 import { useDispatch, useSelector } from 'react-redux'
 import useQuery from '@/hooks/useQuery'
-import { Button, Modal, Spin, Tooltip, message } from 'antd'
+import { Button, Modal, Spin, Tooltip, message, Card, Input  } from 'antd'
 import styles from './index.module.scss'
 import { getImageSize } from '@/helpers/Utils'
 import { CheckOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
-import { hitShapeTypes, traPathGenerateWay, intePathGenerateWay } from '@/constants'
+import { hitShapeTypes, contorlTypes, hitShapeTypeLabels } from '@/constants'
 import { getDrawCursor } from './utils'
 import { fabricObjAddEvent } from './fabricObjAddEvent'
 import TopRightWidget from './TopRightWidget'
 import { generatePolygon } from './fabricObjAddEvent'
-import { zoomHandler, animationEndHandler } from './handler'
+import { zoomHandler, animationEndHandler, animationHandler } from './handler'
 import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
-
+import { VIcon } from '@/components'
 // @ts-ignore
 const fabric = window.fabric
-
+const { TextArea } = Input;
 const CanvasAnnotator = ({
   setChangeSession,
   setIsEdit,
@@ -36,16 +36,17 @@ const CanvasAnnotator = ({
       prefixUrl: `${window.location.protocol}//${window.location.host}/openseadragon/images/`,
 
       // 是否显示导航控制
-      showNavigationControl: true,
-      navigationControlAnchor: 'TOP_LEFT',
+      showNavigationControl: false,
+      // navigationControlAnchor: 'TOP_RIGHT',
 
       // 是否显示导航窗口
       showNavigator: true,
       autoHideControls: false,
       // 以下都是导航配置
+      navigatorPosition: 'TOP_LEFT',
       navigatorAutoFade: false,
-      navigatorHeight: '90px',
-      navigatorWidth: '200px',
+      navigatorHeight: '80px',
+      navigatorWidth: '160px',
       navigatorBackground: '#fefefe',
       navigatorBorderColor: '#000000',
       navigatorDisplayRegionColor: '#FF0000',
@@ -102,12 +103,15 @@ const CanvasAnnotator = ({
     projectHits,
     entityColorMap,
     currentEntity,
+    currentColor,
     currentShape,
-    currentTraPathWay,
-    currentIntePathWay,
+    currentViewer,
+    currentCanvas,
+    currentActiveObj,
     currentControlType,
     boundingBoxMap,
     SAMMode,
+    strokeWidth
   } = useSelector(
     // @ts-ignore
     state => state.project
@@ -146,6 +150,9 @@ const CanvasAnnotator = ({
   // 绘制椭圆形的辅助变量
   const drawingEllipse = useRef(false)  //是否正在绘制椭圆形
 
+  // 绘制多边形路径的辅助变量
+  const drawingPolygonPath = useRef(false)  //是否正在绘制多边形路径
+
   // 绘制多边形的辅助变量
   const drawingPolygon = useRef(false) // 是否正在绘制多边形
   const polygonPoints = useRef([]) // 当前绘制的polygon的点数组
@@ -158,14 +165,31 @@ const CanvasAnnotator = ({
   const [drawingPath, setDrawingPath] = useState(false) // 是否正在绘制自由形状
   const pathGroupArr = useRef([]) // 当前绘制的自由形状的路径数组【自由形状绘制完成后要从页面清除】 【多条路径】
 
-  // EISeg的辅助变量
-  const eiSegPointArr = useRef([]) // 当前的控制点信息
-  const currentEISegPaths = useRef([]) // 当前返回的多条路径信息，临时存储，每次返回时都要先清空上一次的所有路径
-  const [settingEIPoint, setSettingEIPoint] = useState(false)
-
-  // 智能推理模型的辅助变量
-
   // const [currentZoomLevel, setCurrentZoomLevel] = useState(1) // 当前放大倍数
+
+  const [taginfoValue, setTaginfoValue] = useState('')
+  const [isTagInfoModalOpen, setIsTagInfModalOpen] = useState(false);
+  const handleTagInfoModalOk = () => {
+    if(currentActiveObj.tagInfo){
+      currentActiveObj.tagInfo = taginfoValue
+    }else{
+      currentActiveObj.set('tagInfo', taginfoValue);
+    }
+    setIsTagInfModalOpen(false);
+    setTaginfoValue('')
+    // 取消选中所有对象
+    currentCanvas.discardActiveObject();
+    // 设置当前对象为选中状态
+    currentCanvas.setActiveObject(currentActiveObj);
+    // 重新渲染画布
+    currentCanvas.renderAll();
+  };
+  const handelInfoValueChange = (event) => {
+    if(event && event.target && event.target.value){
+      let value = event.target.value;
+      setTaginfoValue(value)
+    }
+  }
 
   const isFreeDraw = useMemo(
     () =>
@@ -179,6 +203,10 @@ const CanvasAnnotator = ({
   useLayoutEffect(() => {
     const _viewer = initOpenSeaDragon()
     setViewer(_viewer)
+    dispatch({
+      type: 'UPDATE_CURRENT_VIEWER',
+      payload: _viewer,
+    })
 
     const overlay = _viewer.fabricjsOverlay({
       scale: 1000,
@@ -217,6 +245,7 @@ const CanvasAnnotator = ({
       drawingEllipse,
       mouseFrom,
       drawingPolygon,
+      drawingPolygonPath,
       polygonPoints,
       drawingObject,
       tempActiveLine,
@@ -227,13 +256,13 @@ const CanvasAnnotator = ({
       setDrawingPath,
       setChangeSession,
       setLoadingInfo,
-      eiSegPointArr,
-      currentEISegPaths,
-      setSettingEIPoint,
       updateLabel,
       space,
       firstClick,
-      isEditLine
+      isEditLine,
+      ControlTypeChangeTODRAG,
+      ChangeActiveObj,
+      dispatch
     )
   }, [space])
 
@@ -242,24 +271,19 @@ const CanvasAnnotator = ({
     if (!viewer) return
     // 添加事件监听器
     viewer.addHandler('zoom', function (event) {
-      zoomHandler(event, dispatch, setZooming, setSpotSize)
+      zoomHandler(event, dispatch, setZooming, setSpotSize, setPosition)
     })
-
+    viewer.addHandler('animation', function(event) {
+      animationHandler(event, dispatch, setZooming, setPosition)
+    });
     viewer.addHandler('animation-finish', function (event) {
-      animationEndHandler(event, dispatch, setZooming)
+      animationEndHandler(event, dispatch, setZooming, setPosition)
     })
     return () => {
       viewer.removeAllHandlers('zoom')
       viewer.removeAllHandlers('animation-finish')
     }
   }, [viewer])
-
-  //交互式标注初次点击弹框
-  useEffect(() => {
-    if (eiSegPointArr.current.length === 1) {
-      message.info('图像特征抽取中，预计需要3秒')
-    }
-  }, [eiSegPointArr])
 
   // 画布初始化，显示之前的标注信息
   useEffect(() => {
@@ -292,7 +316,7 @@ const CanvasAnnotator = ({
     if (isFreeDraw) {
       startDrawingPathWithType('pencil')
     }
-  }, [currentShape, currentEntity, currentTraPathWay, currentIntePathWay, SAMMode])
+  }, [currentShape, currentEntity])
 
   useEffect(() => {
     if (!viewer) return
@@ -301,16 +325,16 @@ const CanvasAnnotator = ({
     currentCanvas.discardActiveObject()
     currentCanvas.renderAll()
     // 设置所有object的可选性
-    currentCanvas.forEachObject(function (object) {
-      object.selectable = currentControlType === 'default'
-      object.evented = currentControlType === 'default'
-    })
+    // currentCanvas.forEachObject(function (object) {
+    //   object.selectable = currentControlType === 'default'
+    //   object.evented = currentControlType === 'default'
+    // })
 
     // 拖拽时关闭绘制模式
     if (currentControlType === 'drag') {
       viewer.setMouseNavEnabled(true)
       viewer.outerTracker.setTracking(true)
-      canvasInstance.current.isDrawingMode = false
+      // canvasInstance.current.isDrawingMode = false
     }
     if (currentControlType === 'default') {
       viewer.setMouseNavEnabled(false)
@@ -318,12 +342,29 @@ const CanvasAnnotator = ({
     }
   }, [viewer, currentControlType])
 
+  const ControlTypeChangeTODRAG = () => {
+    dispatch({
+      type: 'UPDATE_CURRENT_CONTROL_TYPE',
+      payload: contorlTypes.DRAG,
+    })
+    dispatch({
+      type: 'UPDATE_CURRENT_SHAPE',
+      payload: hitShapeTypes.NONE,
+    })
+  }
+
+  const ChangeActiveObj = (obj) => {
+    dispatch({
+      type: 'UPDATE_CURRENT_ACTIVE_OBJ',
+      payload: obj,
+    })
+  }
+
   const updateLabel = async labelSelected => {
     await dispatch({
       type: 'UPDATE_CURRENT_ENTITY',
       payload: labelSelected,
     })
-    console.log(currentEntity)
   }
 
   // 变量重新初始化
@@ -341,20 +382,22 @@ const CanvasAnnotator = ({
         tempLineArr,
         drawingObject,
         tempActiveLine,
-        entityColorMap[currentEntity],
-        currentEntity
+        currentColor,
+        strokeWidth
       )
+      if(currentCanvas){
+        dispatch({
+          type: 'UPDATE_CURRENT_CANVAS',
+          payload: currentCanvas,
+        })
+      }
     }
 
-    // 清除所有的临时变量 【EISeg】
-    eiSegPointArr.current?.forEach(point => canvas.remove(point))
-    currentEISegPaths.current?.forEach(path => canvas.remove(path))
     canvas.remove(drawingObject.current).remove(tempActiveLine.current)
 
     tempActiveLine.current = null
     drawingObject.current = null
     polygonPoints.current = []
-    eiSegPointArr.current = []
     drawingPolygon.current = false
   }
 
@@ -452,16 +495,6 @@ const CanvasAnnotator = ({
     setIsEditLine(false)
   }
 
-  // 完成EISeg的过程，清除临时变量
-  const generateEISegLine = () => {
-    setSettingEIPoint(false)
-    setIsEditLine(false)
-    const canvas = canvasInstance.current
-    eiSegPointArr.current?.forEach(point => canvas.remove(point))
-    currentEISegPaths.current = []
-    eiSegPointArr.current = []
-  }
-
   // 删除某一标注物体
   const deleteBtnClick = () => {
     Modal.confirm({
@@ -478,9 +511,6 @@ const CanvasAnnotator = ({
           type: 'UPDATE_BOUNDING_BOX_MAP',
           payload: boundingBoxMap.filter(box => box.id !== obj.id),
         })
-        // 维护eiSegPointArr数组
-        const pointIndex = eiSegPointArr.current.findIndex(ele => ele.id === obj.id)
-        eiSegPointArr.current.splice(pointIndex, 1)
       },
     })
   }
@@ -491,37 +521,51 @@ const CanvasAnnotator = ({
           style={{ width: `${viewportWidth}px`, height: `${viewportHeight}px` }}
           id="openSeaDragon"
         ></div>
-        <div
+        {currentActiveObj && <div
           id="deleteBtn"
           style={{
             position: 'absolute',
             left: position.left,
-            top: position.top,
+            top: `${position.top + 5}px`,
             display: position.display,
           }}
         >
-          <img
-            src="/delete.svg"
-            alt="删除"
-            onClick={deleteBtnClick}
-            style={{ width: 24, height: 24, cursor: 'pointer' }}
-          />
-
+          <div className={styles.ActiveObjCard}>
+            <div className={styles.ActiveObjCardHeader}>
+              <div className={styles.ActiveObjCardHeaderShape}>
+                <span style={{backgroundColor: currentActiveObj.color}} className={styles.ActiveObjCardHeaderColor}>
+                </span>
+                <span>{hitShapeTypeLabels[currentActiveObj.shape]}</span>
+              </div>
+              <div className={styles.ActiveObjCardOperate}>
+                <div className={styles.ActiveObjCardEdit}
+                    title='编辑标注信息'
+                    onClick={()=>{setIsTagInfModalOpen(true)}}>
+                      <VIcon type="icon-edit" style={{ fontSize: '16px' }} />
+                </div>
+                <div className={styles.ActiveObjCardDelete}
+                    title='删除标注区域'
+                    onClick={deleteBtnClick}>
+                  <VIcon type="icon-delete" style={{ fontSize: '16px' }} />
+                </div>
+              </div>
+            </div>
+            {currentActiveObj?.tagInfo && (
+              <div className={styles.ActiveObjCardTagInfo}>{currentActiveObj.tagInfo}</div>
+            )}
+            <div>
+              <div>宽度：{(currentActiveObj.width * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
+              <div>长度：{(currentActiveObj.height * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
+            </div>
+          </div>
           {position.type === 'path' && (
             <div className={styles.editIcon} onClick={setLineToEdit}>
               <EditOutlined />
             </div>
           )}
-        </div>
-        {currentEntity &&
-          (currentShape === hitShapeTypes.MANUALCLOSE || // 自由绘制模式或者EISeg模式下, 显示控制按钮 TopRightWidget
-            (currentShape === hitShapeTypes.INTEPATH &&
-              [
-                intePathGenerateWay.HQSAMSEG,
-                intePathGenerateWay.SAMSEG,
-                intePathGenerateWay.SemSAMSEG,
-                intePathGenerateWay.EISEG,
-              ].includes(currentIntePathWay))) && (
+        </div>}
+        {currentEntity && currentShape === hitShapeTypes.MANUALCLOSE  // 自由绘制模式或者EISeg模式下, 显示控制按钮 TopRightWidget
+            && (
             <div className={styles.drawingFreeMode}>
               <div className={styles.sizeControl}>
                 <TopRightWidget
@@ -532,13 +576,12 @@ const CanvasAnnotator = ({
                   setLoadingInfo={setLoadingInfo}
                 />
               </div>
-              {(isEditLine || drawingPath || settingEIPoint) && (
+              {(isEditLine || drawingPath) && (
                 <Tooltip title="finish this object">
                   <Button
                     type="primary"
                     onClick={() => {
                       if (isEditLine || drawingPath) generateFreeLine()
-                      if (settingEIPoint) generateEISegLine()
                     }}
                     style={{ marginTop: '10px' }}
                   >
@@ -562,6 +605,19 @@ const CanvasAnnotator = ({
         <div onClick={()=>{setZoom(2)}} className={`${styles.rbChoice} ${styles.choose2}`}>2</div>
         <div onClick={()=>{setZoom(1)}} className={`${styles.rbChoice} ${styles.choose1}`}>1</div>
       </div>}
+      <Modal title="标注信息" 
+              visible={isTagInfoModalOpen} 
+              onOk={handleTagInfoModalOk} 
+              onCancel={()=>{setIsTagInfModalOpen(false)}} 
+              destroyOnClose
+              okText="保存"
+              cancelText="取消">
+          <TextArea placeholder="请输入100字以内标注内容" 
+                    showCount 
+                    maxLength={100} 
+                    onChange={handelInfoValueChange}
+                    {...(currentActiveObj?.tagInfo ? { defaultValue: currentActiveObj.tagInfo } : {})}/>
+        </Modal>
     </div>
   )
 }

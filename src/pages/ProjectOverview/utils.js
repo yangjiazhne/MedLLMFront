@@ -26,14 +26,13 @@ export const downloadFile = async type => {
   let hitsRes = {}
   // 获取项目标记信息
   if (projectDetails.imageType === 'mrxs') {
-    message.warn('暂不支持下载病理图压缩文件')
-    // hitsRes = await fetchPathoProjectHits(projectDetails.id, {
-    //   model: 'human-annotation',
-    //   status: 'done',
-    //   start: 0,
-    //   count: 100,
-    // })
-    return 0
+    // message.warn('暂不支持下载病理图压缩文件')
+    hitsRes = await fetchPathoProjectHits(projectDetails.id, {
+      model: 'human-annotation',
+      hitStatus: 'done',
+      hitResultStatus: 'done',
+    })
+    // return 0
   } else {
     hitsRes = await fetchProjectHits(projectDetails.id, {
       status: 'done',

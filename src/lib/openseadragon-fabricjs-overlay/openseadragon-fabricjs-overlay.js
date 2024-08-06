@@ -177,8 +177,10 @@ Overlay.prototype = {
     let zoom = (this._viewer.viewport._containerInnerSize.x * viewportZoom) / this._scale
     this._fabricCanvas.setZoom(zoom)
     let viewportWindowPoint = this._viewer.viewport.viewportToWindowCoordinates(origin)
-    let x = Math.round(viewportWindowPoint.x)
-    let y = Math.round(viewportWindowPoint.y)
+    // let x = Math.round(viewportWindowPoint.x)
+    // let y = Math.round(viewportWindowPoint.y)
+    let x = viewportWindowPoint.x
+    let y = viewportWindowPoint.y
     let canvasOffset = this._canvasdiv.getBoundingClientRect()
 
     let pageScroll = OpenSeadragon.getPageScroll()
@@ -186,6 +188,10 @@ Overlay.prototype = {
     this._fabricCanvas.absolutePan(
       new fabric.Point(canvasOffset.left - x + pageScroll.x, canvasOffset.top - y + pageScroll.y)
     )
+
+    // Update the origin of the fabric.js canvas after panning
+    let viewportOrigin = this._viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0, 0), true)
+    this._fabricCanvas.setViewportTransform([zoom, 0, 0, zoom, viewportOrigin.x, viewportOrigin.y])
   },
 }
 

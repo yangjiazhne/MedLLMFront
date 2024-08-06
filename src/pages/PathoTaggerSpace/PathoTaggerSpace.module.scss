@@ -5,12 +5,21 @@
   overflow: auto;
 
   .tagBox {
-    width: 260px;
-    height: 520px;
+    width: 250px;
+    min-height: 400px;
     position: absolute;
     z-index: 9999;
-    top: 60px;
-    left: 100px; 
+    top: 90px;
+    left: 90px; 
+  }
+
+  .SliceBox{
+    width: 250px;
+    min-height: 400px;
+    position: absolute;
+    z-index: 9999;
+    top: 90px;
+    left: 90px; 
   }
 
   // .leftContainer {
@@ -45,13 +54,106 @@
   }
 }
 
+.currentImgSize{
+  left: 15px;
+  position: absolute;
+  bottom: 5px;
+  z-index: 9000;
+  border-radius: 24px;
+  padding: 10px;
+  background-color: rgba(40,49,66,.6);
+  color: #cddeed;
+}
+
 .biaozhu{
   left: 15px;
   position: absolute;
-  top: calc(50vh - 156px);
-  z-index: 9999;
+  top: calc(50vh-95px);
+  z-index: 9000;
 
   .biaozhuButton{
+    width: 46px;
+    height: 46px;
+    line-height: 46px;
+    text-align: center;
+    background-color: rgba(40, 49, 66, .6);
+    display: inline-block;
+    margin-right: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    vertical-align: top;
+  }
+}
+
+.sliceList{
+  left: 15px;
+  position: absolute;
+  top: calc(50vh - 145px);
+  z-index: 9000;
+  .sliceListButton{
+    width: 46px;
+    height: 46px;
+    line-height: 46px;
+    text-align: center;
+    background-color: rgba(40, 49, 66, .6);
+    display: inline-block;
+    margin-right: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    vertical-align: top;
+  }
+}
+
+.morePop{
+  :global{
+    .ant-popover-content{
+      .ant-popover-arrow{
+        border-color: transparent transparent #272b33 #272b33 !important;
+      }
+    }
+    .ant-popover-inner-content{
+      padding: 0;
+    }
+  }
+}
+
+.moreListIcon{
+  padding: 10px 15px;
+  background-color: #272b33;
+  cursor: pointer;
+  &:hover{
+    background-color: #354052;
+  }
+}
+.moreListIcon:hover{
+  background-color: #354052;
+}
+
+.moreList{
+  left: 15px;
+  position: absolute;
+  top: calc(50vh - 245px);
+  z-index: 9000;
+  .moreListButton{
+    width: 46px;
+    height: 46px;
+    line-height: 46px;
+    text-align: center;
+    background-color: rgba(40, 49, 66, .6);
+    display: inline-block;
+    margin-right: 15px;
+    border-radius: 50%;
+    cursor: pointer;
+    vertical-align: top;
+  }
+}
+
+.sliceInfo{
+  left: 15px;
+  position: absolute;
+  top: calc(50vh - 195px);
+  z-index: 9000;
+  .sliceInfoButton{
     width: 46px;
     height: 46px;
     line-height: 46px;

@@ -29,7 +29,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
-import { Header, HitImage } from './components'
+import { Header, HitImage, DataList, TaskProgress } from './components'
 import { renderProjectDetail } from './config'
 import styles from './index.module.scss'
 import { VButton } from '@/components'
@@ -324,7 +324,8 @@ const ProjectOverview = () => {
           </Descriptions.Item>
         ))}
       </Descriptions>
-
+      <TaskProgress></TaskProgress>
+      {(projectDetails.imageType === 'normal' || projectDetails.imageType === 'dicom') && (<DataList></DataList>)}
       {/* {projectDetails.imageType === 'mrxs' && deepZoomStatus === 'processing' && (
         <div className={styles.container}>
           <p style={{ color: 'rgba(0, 0, 0, 0.85)', fontWeight: 'bold', fontSize: '16px' }}>
@@ -336,7 +337,7 @@ const ProjectOverview = () => {
           />
         </div>
       )} */}
-      {projectDetails && <RefModelTaskList projectDetails={projectDetails} />}
+      {/* {projectDetails && <RefModelTaskList projectDetails={projectDetails} />}
       {projectDetails.imageType === 'mrxs' && deepZoomStatus === 'failed' && (
         <div className={styles.container}>
           <p style={{ color: red, fontWeight: 'bold', fontSize: '16px' }}>
@@ -368,6 +369,7 @@ const ProjectOverview = () => {
         </div>
       )}
       <div id="backup"></div>
+       */}
       {projectDetails.imageType == 'mrxs' && (
         <div className={styles.container}>
           <p style={{ color: 'rgba(0, 0, 0, 0.85)', fontWeight: 'bold', fontSize: '16px' }}>

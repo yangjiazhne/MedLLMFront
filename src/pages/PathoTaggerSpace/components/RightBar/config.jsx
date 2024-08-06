@@ -35,6 +35,33 @@ export const controls = [
   },
 ]
 
+export const colors = [
+  {
+    value: '#ff0000',
+    label: '红色',
+  },
+  {
+    value: '#00ff00',
+    label: '绿色',
+  },
+  {
+    value: '#0000ff',
+    label: '深蓝',
+  },
+  {
+    value: '#ffff00',
+    label: '黄色',
+  },
+  {
+    value: '#ffa500',
+    label: '橙色',
+  },
+  {
+    value: '#00ffff',
+    label: '浅蓝',
+  },
+]
+
 export const shapes = [
   {
     value: hitShapeTypes.RECT,
@@ -48,12 +75,12 @@ export const shapes = [
     title: '绘制多边形框',
     label: '多边形',
   },
-  {
-    value: hitShapeTypes.CIRCLE,
-    icon: <VIcon type="icon-circle" style={{ fontSize: '18px' }} />,
-    title: '绘制圆形框',
-    label: '圆形',
-  },
+  // {
+  //   value: hitShapeTypes.CIRCLE,
+  //   icon: <VIcon type="icon-circle" style={{ fontSize: '18px' }} />,
+  //   title: '绘制圆形框',
+  //   label: '圆形',
+  // },
   {
     value: hitShapeTypes.ELLIPSE,
     icon: <VIcon type="icon-ellipse" style={{ fontSize: '18px' }} />,
@@ -75,7 +102,7 @@ export const shapes = [
   //   label: '自由路径',
   // },
   {
-    value: hitShapeTypes.MANUALCLOSE,
+    value: hitShapeTypes.POLYGONPATH,
     icon: <VIcon type="icon-ManagePaths" style={{ fontSize: '18px' }} />,
     title: '绘制自由路径',
     label: '自由路径',
@@ -102,7 +129,7 @@ export const iconBtns = (clearPolygons, showReDoModal, saveRow, projectHits, spa
     {
       icon: <CloseOutlined />,
       title: '清除所有标注',
-      width: '300px',
+      width: '',
       color: '#ff4d4f',
       show: space,
       disabled: false,
@@ -125,56 +152,60 @@ export const iconBtns = (clearPolygons, showReDoModal, saveRow, projectHits, spa
     //   disabled: false,
     //   onClick: () => saveRow('savePartialHit'),
     // },
+    // {
+    //   icon: <CheckOutlined />,
+    //   title: '临时保存',
+    //   color: 'teal',
+    //   width: '',
+    //   show: !isDone,
+    //   disabled: false,
+    //   onClick: () => {
+    //     Modal.success({
+    //       title: '保存成功',
+    //       content: '标注信息已保存，您可以刷新或重新打开页面继续标注',
+    //     })
+    //     saveRow('saveTempHit')
+    //   },
+    // },
     {
       icon: <CheckOutlined />,
-      title: '临时保存',
-      color: 'teal',
-      width: '',
-      show: !isDone,
-      disabled: false,
-      onClick: () => {
-        Modal.success({
-          title: '保存成功',
-          content: '标注信息已保存，您可以刷新或重新打开页面继续标注',
-        })
-        saveRow('saveTempHit')
-      },
-    },
-    {
-      icon: <CheckOutlined />,
-      title: '设置为GT',
+      title: '保存标注',
       color: '#52c41a',
       width: '',
       show: !isDone || space,
       disabled: false,
       onClick: history => {
         saveRow('saveToDone')
-        if (isDone && space) {
-          const modal = Modal.success({
-            title: 'GT修改成功',
-            content: '标注信息已保存，您可以刷新或重新打开页面继续标注',
-          })
-        } else {
-          let seconds = 3
-          const modal = Modal.success({
-            title: 'GT保存成功',
-            content: `标注已完成，即将在${seconds}秒后跳转回数据集详情页`,
-          })
+        Modal.success({
+          title: '保存成功',
+          content: '标注信息已保存，您可以刷新或重新打开页面继续标注',
+        })
+        // if (isDone && space) {
+        //   const modal = Modal.success({
+        //     title: 'GT修改成功',
+        //     content: '标注信息已保存，您可以刷新或重新打开页面继续标注',
+        //   })
+        // } else {
+        //   let seconds = 3
+        //   const modal = Modal.success({
+        //     title: 'GT保存成功',
+        //     content: `标注已完成，即将在${seconds}秒后跳转回数据集详情页`,
+        //   })
 
-          const intervalId = setInterval(() => {
-            seconds -= 1
-            if (seconds <= 0) {
-              clearInterval(intervalId)
-              modal.destroy()
-              const projectId = localStorage.getItem('currentProject')
-              history.push('/userHome/projects/' + projectId)
-            } else {
-              modal.update({
-                content: `标注已完成，即将在${seconds}秒后跳转回数据集详情页`,
-              })
-            }
-          }, 1000)
-        }
+          // const intervalId = setInterval(() => {
+          //   seconds -= 1
+          //   if (seconds <= 0) {
+          //     clearInterval(intervalId)
+          //     modal.destroy()
+          //     const projectId = localStorage.getItem('currentProject')
+          //     history.push('/userHome/projects/' + projectId)
+          //   } else {
+          //     modal.update({
+          //       content: `标注已完成，即将在${seconds}秒后跳转回数据集详情页`,
+          //     })
+          //   }
+          // }, 1000)
+        // }
       },
     },
     //{

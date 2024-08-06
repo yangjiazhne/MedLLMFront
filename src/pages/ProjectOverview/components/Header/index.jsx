@@ -68,9 +68,9 @@ const Header = projectHits => {
       </Breadcrumb>
       {createByMe && (
         <div>
-          <a className={styles.gradient2} onClick={showTagged}>
+          {/* <a className={styles.gradient2} onClick={showTagged}>
             查看已标注
-          </a>
+          </a> */}
           <a className={styles.gradient} onClick={startTagging}>
             开始标注
           </a>

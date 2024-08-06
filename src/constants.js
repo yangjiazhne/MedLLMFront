@@ -31,12 +31,25 @@ export const hitShapeTypes = {
     ELLIPSE: 'ellipse',
     RECT: 'boundingBox',
     POLYGON: 'polygon',
+    POLYGONPATH: 'polygonPath',
     PATH: 'path',
-    TRAPATH: 'traPath',
-    INTEPATH: 'intePath',
-    MANUALCLOSE: 'manualClose',
-    MANUAL: 'manual',
-    MODELINFERENCE: 'modelInference',
+    NONE:'none' //拖拽状态
+}
+
+export const hitShapeTypeLabels = {
+    [hitShapeTypes.POINT]: '点',
+    [hitShapeTypes.CIRCLE]: '圆',
+    [hitShapeTypes.ELLIPSE]: '椭圆',
+    [hitShapeTypes.RECT]: '矩形',
+    [hitShapeTypes.POLYGON]: '多边形',
+    [hitShapeTypes.POLYGONPATH]: '自由路径',
+    [hitShapeTypes.PATH]: '路径',
+    [hitShapeTypes.NONE]: '无' // 拖拽状态
+};
+
+export const contorlTypes = {
+    DRAG: 'drag',
+    DEFAULT: 'default'
 }
 
 // 标注页面path路径生成方式
@@ -52,8 +65,6 @@ export const traPathGenerateWay = {
 export const intePathGenerateWay = {
     SAMSEG: 'sam_seg',
     EISEG: 'eiseg',
-    //HQSAMSEG: 'HQ_sam_click',
-    //SemSAMSEG: 'Semantic_SAM_click',
 }
 
 export const primaryColor = '#5cc1bb'
@@ -69,7 +80,3 @@ export const taskTypes = {
     1: { label: '分割', value: 'IMAGE_DETECTION_IMAGE_SEGMENTATION' },
     2: { label: '检测', value: 'IMAGE_DETECTION_IMAGE_SEGMENTATION' },
 }
-
-// export const strokeWidthGrad = {
-
-// }

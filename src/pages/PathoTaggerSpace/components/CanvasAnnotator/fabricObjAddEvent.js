@@ -1,16 +1,7 @@
 import store from '@/redux/store'
 import '@/lib/fabric/fabric'
 import { message, Modal } from 'antd'
-import { hitShapeTypes, intePathGenerateWay, traPathGenerateWay } from '@/constants'
-import {
-  getEISegImg,
-  getSmartPath,
-  getSAMSegImg,
-  getHQSAMSegImg,
-  getSemSAMSegImg,
-  getNewSegImg,
-  getPathoSegImg,
-} from '@/request/actions/tagger'
+import { hitShapeTypes, contorlTypes } from '@/constants'
 import {
   actionHandler,
   addPolygonPoint,
@@ -23,7 +14,6 @@ import {
   polygonPositionHandler,
 } from './utils'
 import { hexToRgba } from '@/helpers/Utils'
-import { useSelector } from 'react-redux'
 
 // @ts-ignore
 const fabric = window.fabric
@@ -39,6 +29,7 @@ export const fabricObjAddEvent = (
   drawingEllipse, //是否正在绘制椭圆形
   mouseFrom, // 绘制矩形/圆形的起始点
   drawingPolygon, // 是否正在绘制多边形
+  drawingPolygonPath, // 是否正在绘制多边形路径
   polygonPoints, // 多边形的点数组
   drawingObject, // 正在绘制的自由路径对象？
   tempActiveLine, // 多边形的正在绘制的临时线
@@ -49,13 +40,13 @@ export const fabricObjAddEvent = (
   setDrawingPath, // 设置是否正在绘制路径
   setChangeSession, // 设置是否改变了画布内容
   setLoadingInfo, //  设置loading信息
-  eiSegPointArr, // 保存eiSeg点的数组
-  currentEISegPaths, // 保存eiSeg路径的数组
-  setSettingEIPoint, // 设置是否正在设置eiSeg点
   updateLabel, // 更新目前选择的标签
   space, // 是否status标注为notDone 或 isEdit是否是true（表示重新进入编辑状态）
   firstClick, // 记录第一次点击状态
-  isEditLine // 当前是否在编辑已有自由路径
+  isEditLine, // 当前是否在编辑已有自由路径
+  ControlTypeChangeTODRAG,  //更改控制方式
+  ChangeActiveObj, //更新目前选中对象
+  dispatch
 ) => {
   canvas.on({
     'selection:created': o => {
@@ -64,35 +55,37 @@ export const fabricObjAddEvent = (
       if (o.selected.length > 1)
         // 已禁用了canvas的多选
         return
-
+      ChangeActiveObj(o.selected[0])
       if (o.selected && o.selected.length > 0 && o.selected[0].label) {
         updateLabel(o.selected[0].label[0])
       }
-      const tr = o.selected[0].aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.selected[0].aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
 
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.selected[0].type,
       })
     },
     'selection:updated': o => {
       if (o.selected.length > 1) return
+      ChangeActiveObj(o.selected[0])
       if (o.selected && o.selected.length > 0 && o.selected[0].label) {
         updateLabel(o.selected[0].label[0])
       }
-      const tr = o.selected[0].aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.selected[0].aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.selected[0].type,
       })
     },
     'selection:cleared': o => {
+      ChangeActiveObj(null)
       setPosition({ left: 0, top: 0, display: 'none' })
       if (!space) {
         updateLabel('')
@@ -104,53 +97,53 @@ export const fabricObjAddEvent = (
     'object:modified': o => {
       setChangeSession(true)
 
-      const tr = o.target.aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.target.aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.target.type,
       })
     },
     'object:scaling': o => {
       //// console.log('scaling')
-      const tr = o.target.aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.target.aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.target.type,
       })
     },
     'object:moving': o => {
       //// console.log('moving')
-      const tr = o.target.aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.target.aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.target.type,
       })
     },
     'object:rotating': o => {
-      const tr = o.target.aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.target.aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.target.type,
       })
     },
     'object:skewing': o => {
-      const tr = o.target.aCoords.tr
-      const _relativeTr = fabric.util.transformPoint(tr, canvas.viewportTransform)
+      const bl = o.target.aCoords.bl
+      const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
       setPosition({
-        left: _relativeTr.x,
-        top: _relativeTr.y,
+        left: _relativeBl.x,
+        top: _relativeBl.y,
         display: 'block',
         type: o.target.type,
       })
@@ -170,20 +163,21 @@ export const fabricObjAddEvent = (
       const {
         currentShape,
         entityColorMap,
-        currentEntity,
+        currentColor,
         currentControlType,
-        segPositive,
-        currentTraPathWay,
         pathoImgInfo,
         pathoViewSize,
-        SAMMode,
-        currentIntePathWay,
         strokeWidth,
         circleRadius,
+        isMutiTag
       } = project
+      if (o.e && o.target) {
+        o.e.preventDefault();
+        o.e.stopPropagation();
+      }
       switch (currentControlType) {
         case 'default':
-          if (!currentEntity || !currentShape) return
+          if (!currentColor || !currentShape) return
           // 默认模式下处理鼠标点击事件
           // 视口坐标系转换为画布坐标系
           const matrix = fabric.util.invertTransform(canvas.viewportTransform)
@@ -203,10 +197,8 @@ export const fabricObjAddEvent = (
             actualPoint.y -= circleRadius
             canvas.add(
               drawPoint({
-                color: entityColorMap[currentEntity],
+                color: currentColor,
                 position: actualPoint,
-                label: [currentEntity],
-                strokeWidth: strokeWidth,
                 circleRadius: circleRadius,
               })
             )
@@ -226,28 +218,29 @@ export const fabricObjAddEvent = (
             mouseFrom.current = actualPoint
           }
 
-          // 画矩形 或 GRABCUT生成path
-          if (
-            currentShape === hitShapeTypes.RECT ||
-            (currentShape === hitShapeTypes.INTEPATH &&
-              currentIntePathWay === intePathGenerateWay.SAMSEG &&
-              SAMMode === 'box')
-          ) {
+          // 画矩形 
+          if (currentShape === hitShapeTypes.RECT) {
             if (o.target) return
-            if (
-              currentShape === hitShapeTypes.INTEPATH &&
-              currentIntePathWay === intePathGenerateWay.SAMSEG &&
-              SAMMode === 'box'
-            ) {
-              if (pathoViewSize.width > 1024 || pathoViewSize.height > 1024) {
-                Modal.warning({
-                  content: `该算法要求视窗内图片尺寸小于 1024*1024，当前视窗内图片尺寸为 ${pathoViewSize.width} * ${pathoViewSize.height}，请放大图片后再使用该算法。`,
-                })
-                return
-              }
-            }
             drawingRect.current = true
             mouseFrom.current = actualPoint
+          }
+
+          // 画多边形路径
+          if (currentShape === hitShapeTypes.POLYGONPATH) {
+            if(o.target) return
+            drawingPolygonPath.current = true
+            mouseFrom.current = actualPoint
+            addPolygonPoint(
+              actualPoint,
+              canvas,
+              polygonPoints,
+              drawingObject,
+              currentColor,
+              tempActiveLine,
+              tempLineArr,
+              strokeWidth,
+              0
+            ) // 往多边形中添加点
           }
 
           // 画多边形
@@ -263,10 +256,12 @@ export const fabricObjAddEvent = (
                 tempLineArr,
                 drawingObject,
                 tempActiveLine,
-                entityColorMap[currentEntity],
-                currentEntity,
+                currentColor,
                 strokeWidth
               )
+              if (!isMutiTag) {
+                ControlTypeChangeTODRAG()
+              }
               drawingPolygon.current = false
             } else {
               // 多边形绘制中
@@ -276,7 +271,7 @@ export const fabricObjAddEvent = (
                 canvas,
                 polygonPoints,
                 drawingObject,
-                entityColorMap[currentEntity],
+                currentColor,
                 tempActiveLine,
                 tempLineArr,
                 strokeWidth,
@@ -284,126 +279,6 @@ export const fabricObjAddEvent = (
               ) // 往多边形中添加点
             }
           }
-
-          // EISEG生成path
-          if (
-            currentShape === hitShapeTypes.INTEPATH &&
-            currentIntePathWay === intePathGenerateWay.EISEG
-          ) {
-            // 临时路径数组不为空时允许穿透
-            if (o.target && !currentEISegPaths.current.length) return
-            if (pathoViewSize.width > 1024 || pathoViewSize.height > 1024) {
-              Modal.warning({
-                title: '注意',
-                content: (
-                  <div>
-                    &emsp; 该算法要求视窗内图片尺寸小于 <b>1024*1024</b>
-                    <br />
-                    &emsp; 当前视窗内图片尺寸为{' '}
-                    <b>
-                      {pathoViewSize.width} * {pathoViewSize.height}
-                    </b>
-                    <br />
-                    &emsp; 请<b>放大图片</b>后再使用该算法
-                  </div>
-                ),
-              })
-              return
-            }
-            setSettingEIPoint(true)
-            actualPoint.x -= circleRadius
-            actualPoint.y -= circleRadius
-            const point = drawPoint({
-              color: segPositive ? 'green' : 'red',
-              position: actualPoint,
-              strokeWidth: strokeWidth,
-              circleRadius: circleRadius,
-            })
-            // // console.log(actualPoint)
-            // // console.log(point)
-            point.set({ positive: segPositive })
-            canvas.add(point)
-            eiSegPointArr.current.push(point)
-            if (eiSegPointArr.current.length === 1) {
-              message.info('图像特征抽取中，预计需要10秒')
-            }
-            generateEISegPath(setLoadingInfo, eiSegPointArr, currentEISegPaths, leftTopPoint)
-          } else if (
-            currentShape === hitShapeTypes.INTEPATH &&
-            currentIntePathWay === intePathGenerateWay.SAMSEG &&
-            SAMMode === 'point'
-          ) {
-            if (o.target && !currentEISegPaths.current.length) return
-            if (pathoViewSize.width > 1024 || pathoViewSize.height > 1024) {
-              Modal.warning({
-                title: '注意',
-                content: (
-                  <div>
-                    &emsp; 该算法要求视窗内图片尺寸小于 <b>1024*1024</b>
-                    <br />
-                    &emsp; 当前视窗内图片尺寸为{' '}
-                    <b>
-                      {pathoViewSize.width} * {pathoViewSize.height}
-                    </b>
-                    <br />
-                    &emsp; 请<b>放大图片</b>后再使用该算法
-                  </div>
-                ),
-              })
-              return
-            }
-            setSettingEIPoint(true)
-            actualPoint.x -= circleRadius
-            actualPoint.y -= circleRadius
-            const point = drawPoint({
-              color: segPositive ? 'green' : 'red',
-              position: actualPoint,
-              strokeWidth: strokeWidth,
-              circleRadius: circleRadius,
-            })
-            point.set({ positive: segPositive })
-            canvas.add(point)
-            eiSegPointArr.current.push(point)
-            if (eiSegPointArr.current.length === 1) {
-              message.info('图像特征抽取中，预计需要10秒')
-            }
-            generateSAMSegPath(setLoadingInfo, eiSegPointArr, currentEISegPaths, leftTopPoint)
-          }
-          // else if (
-          //   currentShape === hitShapeTypes.INTEPATH &&
-          //   currentIntePathWay === intePathGenerateWay.HQSAMSEG
-          // ) {
-          //   if (o.target && !currentEISegPaths.current.length) return
-          //   setSettingEIPoint(true)
-          //   const point = drawPoint({
-          //     color: segPositive ? 'green' : 'red',
-          //     position: actualPoint,
-          //   })
-          //   point.set({ positive: segPositive })
-          //   canvas.add(point)
-          //   eiSegPointArr.current.push(point)
-          //   if (eiSegPointArr.current.length === 1) {
-          //     message.info('图像特征抽取中，预计需要10秒')
-          //   }
-          //   generateHQSAMSegPath(setLoadingInfo, eiSegPointArr, currentEISegPaths)
-          // } else if (
-          //   currentShape === hitShapeTypes.INTEPATH &&
-          //   currentIntePathWay === intePathGenerateWay.SemSAMSEG
-          // ) {
-          //   if (o.target && !currentEISegPaths.current.length) return
-          //   setSettingEIPoint(true)
-          //   const point = drawPoint({
-          //     color: segPositive ? 'green' : 'red',
-          //     position: actualPoint,
-          //   })
-          //   point.set({ positive: segPositive })
-          //   canvas.add(point)
-          //   eiSegPointArr.current.push(point)
-          //   if (eiSegPointArr.current.length === 1) {
-          //     message.info('图像特征抽取中，预计需要10秒')
-          //   }
-          //   generateSemSAMSegPath(setLoadingInfo, eiSegPointArr, currentEISegPaths)
-          // }
           break
         case 'drag':
           // 拖拽模式下处理鼠标点击事件
@@ -420,11 +295,8 @@ export const fabricObjAddEvent = (
         currentShape,
         entityColorMap,
         strokeWidth,
-        currentEntity,
+        currentColor,
         currentControlType,
-        currentTraPathWay,
-        currentIntePathWay,
-        SAMMode,
       } = project
 
       const matrix = fabric.util.invertTransform(canvas.viewportTransform)
@@ -433,27 +305,33 @@ export const fabricObjAddEvent = (
       switch (currentControlType) {
         // 默认模式下处理鼠标移动事件
         case 'default':
-          canvas.defaultCursor = currentEntity ? 'crosshair' : 'default'
+          canvas.defaultCursor = currentColor ? 'crosshair' : 'default'
 
           moveCount.current++
           if (moveCount.current % 2) return // 减少绘制频率
-          if (
-            drawingRect.current &&
-            (currentShape === hitShapeTypes.RECT ||
-              (currentShape === hitShapeTypes.TRAPATH && isRectGrabPath(currentTraPathWay)) ||
-              (currentShape === hitShapeTypes.INTEPATH &&
-                currentIntePathWay === intePathGenerateWay.SAMSEG &&
-                SAMMode === 'box'))
-          ) {
+          if (drawingRect.current && currentShape === hitShapeTypes.RECT) {
             generateRect(
               canvas,
               actualPoint,
               drawingObject,
               mouseFrom,
-              entityColorMap[currentEntity],
-              currentEntity,
+              currentColor,
               strokeWidth
             )
+          }
+
+          if ( drawingPolygonPath.current && currentShape === hitShapeTypes.POLYGONPATH) {
+            addPolygonPoint(
+              actualPoint,
+              canvas,
+              polygonPoints,
+              drawingObject,
+              currentColor,
+              tempActiveLine,
+              tempLineArr,
+              strokeWidth,
+              0
+            ) // 往多边形中添加点
           }
 
           //绘制圆形
@@ -463,8 +341,7 @@ export const fabricObjAddEvent = (
               actualPoint,
               drawingObject,
               mouseFrom,
-              entityColorMap[currentEntity],
-              currentEntity,
+              currentColor,
               strokeWidth
             )
           }
@@ -476,8 +353,7 @@ export const fabricObjAddEvent = (
               actualPoint,
               drawingObject,
               mouseFrom,
-              entityColorMap[currentEntity],
-              currentEntity,
+              currentColor,
               strokeWidth
             )
           }
@@ -513,10 +389,6 @@ export const fabricObjAddEvent = (
         // 拖拽模式下处理鼠标移动事件
         case 'drag':
           canvas.defaultCursor = 'grab'
-        // if (panningCanvas.current && o.e) {
-        //   var delta = new fabric.Point(o.e.movementX, o.e.movementY)
-        //   canvas.relativePan(delta)
-        // }
         default:
           break
       }
@@ -528,14 +400,13 @@ export const fabricObjAddEvent = (
         currentShape,
         entityColorMap,
         strokeWidth,
-        currentEntity,
+        currentColor,
+        currentCanvas,
         currentControlType,
-        currentTraPathWay,
-        currentIntePathWay,
         pathoImgInfo,
-        SAMMode,
+        isMutiTag
       } = project
-
+      
       const matrix = fabric.util.invertTransform(canvas.viewportTransform)
       const actualPoint = fabric.util.transformPoint(o.pointer, matrix)
       const leftTopPoint = fabric.util.transformPoint({ x: 0, y: 0 }, matrix)
@@ -557,13 +428,19 @@ export const fabricObjAddEvent = (
               actualPoint,
               drawingObject,
               mouseFrom,
-              entityColorMap[currentEntity],
-              currentEntity,
+              currentColor,
               strokeWidth
             )
             drawingObject.current = null
             drawingCircle.current = false
             moveCount.current = 1
+            if (!isMutiTag) {
+              ControlTypeChangeTODRAG()
+            }
+            dispatch({
+              type: 'UPDATE_CURRENT_CANVAS',
+              payload: currentCanvas,
+            })
           }
           //椭圆形绘制完毕
           if(currentShape === hitShapeTypes.ELLIPSE && drawingEllipse.current){
@@ -572,21 +449,46 @@ export const fabricObjAddEvent = (
               actualPoint,
               drawingObject,
               mouseFrom,
-              entityColorMap[currentEntity],
-              currentEntity,
+              currentColor,
               strokeWidth
             )
             drawingObject.current = null
             drawingEllipse.current = false
             moveCount.current = 1
+            if (!isMutiTag) {
+              ControlTypeChangeTODRAG()
+            }
+            dispatch({
+              type: 'UPDATE_CURRENT_CANVAS',
+              payload: currentCanvas,
+            })
           }
-          if (
-            (currentShape === hitShapeTypes.RECT ||
-              (currentShape === hitShapeTypes.INTEPATH &&
-                currentIntePathWay === intePathGenerateWay.SAMSEG &&
-                SAMMode === 'box')) &&
-            drawingRect.current
-          ) {
+          // 多边形路径绘制完成
+          if ( drawingPolygonPath.current && currentShape === hitShapeTypes.POLYGONPATH) {
+            generatePolygon(
+              canvas,
+              polygonPoints,
+              tempLineArr,
+              drawingObject,
+              tempActiveLine,
+              currentColor,
+              strokeWidth
+            )
+
+            tempActiveLine.current = null
+            polygonPoints.current = []
+            drawingObject.current = null
+            drawingPolygonPath.current = false
+            moveCount.current = 1
+            if (!isMutiTag) {
+              ControlTypeChangeTODRAG()
+            }
+            dispatch({
+              type: 'UPDATE_CURRENT_CANVAS',
+              payload: currentCanvas,
+            })
+          }
+          if (currentShape === hitShapeTypes.RECT && drawingRect.current) {
             // 矩形绘制完毕
             if (currentShape === hitShapeTypes.RECT) {
               generateRect(
@@ -594,34 +496,22 @@ export const fabricObjAddEvent = (
                 actualPoint,
                 drawingObject,
                 mouseFrom,
-                entityColorMap[currentEntity],
-                currentEntity,
+                currentColor,
                 strokeWidth
-              )
-            }
-
-            if (
-              currentShape === hitShapeTypes.INTEPATH &&
-              currentIntePathWay === intePathGenerateWay.SAMSEG &&
-              SAMMode === 'box'
-            ) {
-              generateSAMRectSegPath(
-                canvas,
-                actualPoint,
-                drawingObject,
-                mouseFrom,
-                setLoadingInfo,
-                entityColorMap[currentEntity],
-                currentEntity,
-                leftTopPoint
               )
             }
 
             drawingObject.current = null
             drawingRect.current = false
             moveCount.current = 1
+            if (!isMutiTag) {
+              ControlTypeChangeTODRAG()
+            }
+            dispatch({
+              type: 'UPDATE_CURRENT_CANVAS',
+              payload: currentCanvas,
+            })
           }
-
           if (canvas.isDrawingMode && canvas.brushMode === 'pencil') {
             setDrawingPath(true)
             // 画笔模式
@@ -640,26 +530,7 @@ export const fabricObjAddEvent = (
       }
     },
     'mouse:wheel': o => {
-      // //// console.log('mouse:wheel', o.e.deltaY)
-      // const event = o.e
-      // event.preventDefault()
-      // var zoom = (event.deltaY > 0 ? 0.1 : -0.1) + canvas.getZoom()
-      // zoom = Math.max(0.1, zoom) //最小为原来的1/10
-      // zoom = Math.min(3, zoom) //最大是原来的3倍
-      // // 以canvas的中心为缩放中心点（若以鼠标当前位置为中心点，则缩放后移动鼠标再缩放，位置会出现严重偏差）
-      // const centerPoint = { x: canvas.getWidth() / 2, y: canvas.getHeight() / 2 }
-      // var zoomPoint = new fabric.Point(centerPoint.x, centerPoint.y)
-      // canvas.zoomToPoint(zoomPoint, zoom)
-      // const obj = canvas.getActiveObject()
-      // if (obj) {
-      //   const _relativeTr = fabric.util.transformPoint(obj.aCoords.tr, canvas.viewportTransform)
-      //   setPosition({
-      //     left: _relativeTr.x,
-      //     top: _relativeTr.y,
-      //     display: 'block',
-      //     type: obj.type,
-      //   })
-      // }
+
     },
   })
 }
@@ -672,7 +543,6 @@ export const generatePolygon = (
   drawingObject,
   tempActiveLine,
   fillColor,
-  currentEntity,
   strokeWidth
 ) => {
   if (!drawingObject.current) return
@@ -685,7 +555,6 @@ export const generatePolygon = (
   const polygon = drawPolygon({
     points,
     color: fillColor,
-    label: [currentEntity],
     strokeWidth,
   })
   // polygon.left -= sliceX
@@ -720,7 +589,6 @@ const generateRect = (
   drawingObject,
   mouseFrom,
   fillColor,
-  currentEntity,
   strokeWidth
 ) => {
   if (drawingObject.current) {
@@ -732,7 +600,6 @@ const generateRect = (
     beginPoint: mouseFrom.current,
     endPoint,
     color: fillColor,
-    label: [currentEntity],
     strokeWidth: strokeWidth,
   })
   canvas.add(rect)
@@ -747,7 +614,6 @@ const generateCircle = (
   drawingObject,
   mouseFrom,
   fillColor,
-  currentEntity,
   strokeWidth
 ) => {
   if (drawingObject.current) {
@@ -765,7 +631,6 @@ const generateCircle = (
     top, 
     radius,
     color: fillColor,
-    label: [currentEntity],
     strokeWidth: strokeWidth,
   })
   canvas.add(circle)
@@ -779,7 +644,6 @@ const generateEllipse = (
   drawingObject,
   mouseFrom,
   fillColor,
-  currentEntity,
   strokeWidth
 ) => {
   if (drawingObject.current) {
@@ -797,387 +661,10 @@ const generateEllipse = (
     rx, 
     ry,
     color: fillColor,
-    label: [currentEntity],
     strokeWidth: strokeWidth,
   })
   canvas.add(ellipse)
   drawingObject.current = ellipse
-}
-
-// 根据选择框生成智能路径
-const generateSmartPath = async (
-  canvas,
-  endPoint,
-  drawingObject,
-  mouseFrom,
-  setLoadingInfo,
-  fillColor,
-  currentEntity
-) => {
-  if (drawingObject.current) {
-    // 清除上一次绘制的矩形
-    canvas.remove(drawingObject.current)
-  }
-
-  const { project } = store.getState()
-  const { currentHit, currentImgInfo, currentTraPathWay, cannyThreshold, threshold } = project
-  // 当前图像的缩略图切割信息
-  const { sliceX, sliceY } = currentImgInfo
-  let imgSrc = currentHit.thumbnailImg
-  if (imgSrc.indexOf('/uploads') !== -1) {
-    imgSrc = '/uploads' + imgSrc.split('/uploads')[1]
-  }
-  const data = {
-    xPosition: mouseFrom.current.x + sliceX,
-    yPosition: mouseFrom.current.y + sliceY,
-    width: endPoint.x - mouseFrom.current.x,
-    height: endPoint.y - mouseFrom.current.y,
-    imgUrl: imgSrc,
-    algorithm: currentTraPathWay,
-  }
-  if (currentTraPathWay === traPathGenerateWay.THRESHOLD) {
-    data.thresh = threshold[0]
-    data.maxVal = threshold[1]
-  }
-  if (currentTraPathWay === traPathGenerateWay.CANNY) {
-    data.threshold1 = cannyThreshold[0]
-    data.threshold2 = cannyThreshold[1]
-  }
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  const res = await getSmartPath(data)
-  setLoadingInfo({ flag: false, text: '' })
-
-  try {
-    const grabPaths = JSON.parse(res.data.maskPath)
-    grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      aiPath.left -= sliceX
-      aiPath.top -= sliceY
-      aiPath.setCoords()
-      canvas.add(aiPath)
-    })
-  } catch (error) {}
-}
-// 根据选择框生成samSeg智能路径
-const generateSAMRectSegPath = async (
-  canvas,
-  endPoint,
-  drawingObject,
-  mouseFrom,
-  setLoadingInfo,
-  fillColor,
-  currentEntity,
-  leftTopPoint
-) => {
-  if (drawingObject.current) {
-    // 清除上一次绘制的矩形
-    canvas.remove(drawingObject.current)
-  }
-
-  const { project } = store.getState()
-  const { projectDetails, currentHit, currentImgInfo, currentCanvas, pathoViewSize, pathoImgInfo } =
-    project
-
-  let imgSrc = projectDetails.mrxsAddress
-  const x1 = convertCanvasToImage(
-    Math.min(mouseFrom.current.x, endPoint.x),
-    pathoImgInfo.size.width,
-    1000
-  )
-  const y1 = convertCanvasToImage(
-    Math.min(mouseFrom.current.y, endPoint.y),
-    pathoImgInfo.size.width,
-    1000
-  )
-  const x2 = convertCanvasToImage(
-    Math.max(mouseFrom.current.x, endPoint.x),
-    pathoImgInfo.size.width,
-    1000
-  )
-  const y2 = convertCanvasToImage(
-    Math.max(mouseFrom.current.y, endPoint.y),
-    pathoImgInfo.size.width,
-    1000
-  )
-  const region = [
-    leftTopPoint.x,
-    leftTopPoint.y,
-    Number(pathoViewSize.width),
-    Number(pathoViewSize.height),
-  ]
-  const box = [[x1 - region[0], y1 - region[1], x2 - region[0], y2 - region[1]]]
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  const res = await getPathoSegImg({
-    region: region,
-    box: box,
-    imgPath: imgSrc,
-    modelName: 'SegmentAnything',
-    projectId: projectDetails.id,
-  })
-  setLoadingInfo({ flag: false, text: '' })
-
-  if (!res.err && res.data?.length) {
-    const grabPaths = res.data
-    //坐标转换，图像坐标转换为canvas坐标
-    const _grabPaths = grabPaths.map(pathPoints => {
-      return pathPoints.map(point => {
-        // 对每个点进行转换，并将处理后的点添加到新数组中
-        return [
-          (point[0] * 1000) / pathoImgInfo.size.width,
-          (point[1] * 1000) / pathoImgInfo.size.width,
-        ]
-      })
-    })
-    _grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      // aiPath.left -= sliceX
-      // aiPath.top -= sliceY
-      aiPath.setCoords()
-      currentCanvas.add(aiPath)
-    })
-  }
-}
-// 根据点数组生成eiSeg智能路径
-const generateEISegPath = async (
-  setLoadingInfo,
-  eiSegPointArr,
-  currentEISegPaths,
-  leftTopPoint
-) => {
-  const { project } = store.getState()
-  const {
-    projectDetails,
-    currentHit,
-    currentImgInfo,
-    projectHits,
-    currentCanvas,
-    entityColorMap,
-    currentEntity,
-    pathoViewSize,
-    pathoImgInfo,
-  } = project
-  currentEISegPaths.current.forEach(path => currentCanvas.remove(path))
-  const fillColor = entityColorMap[currentEntity]
-
-  // 当前图像的缩略图切割信息
-  // const { sliceX, sliceY } = currentImgInfo
-  let imgSrc = projectDetails.mrxsAddress
-  // if (imgSrc.indexOf('/uploads') !== -1) {
-  //   imgSrc = '/uploads' + imgSrc.split('/uploads')[1]
-  // }
-
-  const region = [
-    leftTopPoint.x,
-    leftTopPoint.y,
-    Number(pathoViewSize.width),
-    Number(pathoViewSize.height),
-  ]
-
-  const clickList = eiSegPointArr.current.map(point => ({
-    x: convertCanvasToImage(point.left, pathoImgInfo.size.width, 1000) - region[0],
-    y: convertCanvasToImage(point.top, pathoImgInfo.size.width, 1000) - region[1],
-    positive: point.positive ? 1 : 0,
-    id: point.id,
-  }))
-
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  const res = await getPathoSegImg({
-    region: region,
-    click_list: clickList,
-    imgPath: imgSrc,
-    modelName: 'EISeg',
-    projectId: projectDetails.id,
-  })
-  setLoadingInfo({ flag: false, text: '' })
-
-  if (!res.err && res.data?.length) {
-    const grabPaths = res.data
-    //坐标转换，图像坐标转换为canvas坐标
-    const _grabPaths = grabPaths.map(pathPoints => {
-      return pathPoints.map(point => {
-        // 对每个点进行转换，并将处理后的点添加到新数组中
-        return [
-          (point[0] * 1000) / pathoImgInfo.size.width,
-          (point[1] * 1000) / pathoImgInfo.size.width,
-        ]
-      })
-    })
-    _grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      // aiPath.left -= sliceX
-      // aiPath.top -= sliceY
-      aiPath.setCoords()
-      currentEISegPaths.current.push(aiPath)
-      currentCanvas.add(aiPath)
-    })
-  }
-}
-
-// 根据点数组生成samSeg智能路径
-const generateSAMSegPath = async (
-  setLoadingInfo,
-  eiSegPointArr,
-  currentEISegPaths,
-  leftTopPoint
-) => {
-  const { project } = store.getState()
-  const {
-    projectDetails,
-    currentHit,
-    currentImgInfo,
-    projectHits,
-    currentCanvas,
-    entityColorMap,
-    currentEntity,
-    pathoViewSize,
-    pathoImgInfo,
-  } = project
-  currentEISegPaths.current.forEach(path => currentCanvas.remove(path))
-  const fillColor = entityColorMap[currentEntity]
-
-  // 当前图像的缩略图切割信息
-  // const { sliceX, sliceY } = currentImgInfo
-  let imgSrc = projectDetails.mrxsAddress
-  // if (imgSrc.indexOf('/uploads') !== -1) {
-  //   imgSrc = '/uploads' + imgSrc.split('/uploads')[1]
-  // }
-  const region = [
-    leftTopPoint.x,
-    leftTopPoint.y,
-    Number(pathoViewSize.width),
-    Number(pathoViewSize.height),
-  ]
-
-  const clickList = eiSegPointArr.current.map(point => ({
-    x: convertCanvasToImage(point.left, pathoImgInfo.size.width, 1000) - region[0],
-    y: convertCanvasToImage(point.top, pathoImgInfo.size.width, 1000) - region[1],
-    positive: point.positive ? 1 : 0,
-    id: point.id,
-  }))
-
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  //// console.log(projectDetails)
-  const res = await getPathoSegImg({
-    region: region,
-    click_list: clickList,
-    imgPath: imgSrc,
-    modelName: 'SegmentAnything',
-    projectId: projectDetails.id,
-  })
-  setLoadingInfo({ flag: false, text: '' })
-
-  if (!res.err && res.data?.length) {
-    const grabPaths = res.data
-    //坐标转换，图像坐标转换为canvas坐标
-    const _grabPaths = grabPaths.map(pathPoints => {
-      return pathPoints.map(point => {
-        // 对每个点进行转换，并将处理后的点添加到新数组中
-        return [
-          (point[0] * 1000) / pathoImgInfo.size.width,
-          (point[1] * 1000) / pathoImgInfo.size.width,
-        ]
-      })
-    })
-    _grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      // aiPath.left -= sliceX
-      // aiPath.top -= sliceY
-      aiPath.setCoords()
-      currentEISegPaths.current.push(aiPath)
-      currentCanvas.add(aiPath)
-    })
-  }
-}
-
-const generateHQSAMSegPath = async (setLoadingInfo, eiSegPointArr, currentEISegPaths) => {
-  const { project } = store.getState()
-  const {
-    projectDetails,
-    currentHit,
-    currentImgInfo,
-    currentCanvas,
-    entityColorMap,
-    currentEntity,
-  } = project
-  currentEISegPaths.current.forEach(path => currentCanvas.remove(path))
-  const fillColor = entityColorMap[currentEntity]
-
-  // 当前图像的缩略图切割信息
-  const { sliceX, sliceY } = currentImgInfo
-  let imgSrc = currentHit.thumbnailImg
-  if (imgSrc.indexOf('/uploads') !== -1) {
-    imgSrc = '/uploads' + imgSrc.split('/uploads')[1]
-  }
-  const clickList = eiSegPointArr.current.map(point => ({
-    x: point.left,
-    y: point.top,
-    positive: point.positive ? 1 : 0,
-    id: point.id,
-  }))
-
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  const res = await getHQSAMSegImg({
-    click_list: clickList,
-    img_path: imgSrc,
-  })
-  setLoadingInfo({ flag: false, text: '' })
-
-  if (!res.err && res.data?.length) {
-    const grabPaths = res.data
-    grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      aiPath.left -= sliceX
-      aiPath.top -= sliceY
-      aiPath.setCoords()
-      currentEISegPaths.current.push(aiPath)
-      currentCanvas.add(aiPath)
-    })
-  }
-}
-
-const generateSemSAMSegPath = async (setLoadingInfo, eiSegPointArr, currentEISegPaths) => {
-  const { project } = store.getState()
-  const { currentHit, currentImgInfo, currentCanvas, entityColorMap, currentEntity } = project
-  currentEISegPaths.current.forEach(path => currentCanvas.remove(path))
-  const fillColor = entityColorMap[currentEntity]
-
-  // 当前图像的缩略图切割信息
-  const { sliceX, sliceY } = currentImgInfo
-  let imgSrc = currentHit.thumbnailImg
-  if (imgSrc.indexOf('/uploads') !== -1) {
-    imgSrc = '/uploads' + imgSrc.split('/uploads')[1]
-  }
-  const clickList = eiSegPointArr.current.map(point => ({
-    x: point.left,
-    y: point.top,
-    positive: point.positive ? 1 : 0,
-    id: point.id,
-  }))
-
-  setLoadingInfo({ flag: true, text: '智能抓取路径分析中...' })
-  const res = await getSemSAMSegImg({
-    click_list: clickList,
-    img_path: imgSrc,
-  })
-  setLoadingInfo({ flag: false, text: '' })
-
-  if (!res.err && res.data?.length) {
-    const grabPaths = res.data
-    grabPaths.forEach(pathPoints => {
-      pathPoints.push(pathPoints[0])
-      const aiPath = convertPointsToPath(pathPoints, fillColor, [currentEntity])
-      aiPath.left -= sliceX
-      aiPath.top -= sliceY
-      aiPath.setCoords()
-      currentEISegPaths.current.push(aiPath)
-      currentCanvas.add(aiPath)
-    })
-  }
 }
 
 // 根据一维点数组返回path路径
@@ -1219,18 +706,6 @@ const convertCanvasToImage = (x, imageWidth, canvasScale) => {
 
   _x = _x / canvasScale
   return _x
-}
-
-// Canny、RegionGrow、Threshold、WaterShed、RegionSplitMerge、Grabcut 都使用矩形框选择抓取区域
-const isRectGrabPath = pathWay => {
-  return [
-    traPathGenerateWay.CANNY,
-    traPathGenerateWay.GRABCUT,
-    traPathGenerateWay.REGIONGROW,
-    traPathGenerateWay.THRESHOLD,
-    traPathGenerateWay.WATERSHED,
-    traPathGenerateWay.REGIONSPLITMERGE,
-  ].includes(pathWay)
 }
 
 const isInObject = (object, point) => {

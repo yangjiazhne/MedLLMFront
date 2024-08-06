@@ -78,7 +78,7 @@ export const addPolygonPoint = (
   } else {
     const polygon = new fabric.Polygon([point], {
       stroke: '#1ae04e',
-      strokeWidth: 1,
+      strokeWidth: strokeWidth,
       fill: fillColor,
       opacity: 0.4,
       selectable: false,
@@ -189,17 +189,17 @@ export const getDrawCursor = brushSize => {
 
 // 绘制点
 export const drawPoint = options => {
-  const { position, color, label, circleRadius = 2, id } = options
+  const { position, color, circleRadius = 2, id } = options
 
   // console.log('绘制圆形', position.x - circleRadius, position.y - circleRadius)
   return new fabric.Circle({
     id: id || Date.now(),
-    label,
     shape: hitShapeTypes.POINT,
     left: position.x,
     top: position.y,
     stroke: null,
     fill: color,
+    color: color,
     radius: circleRadius,
     scaleY: 1,
     scaleX: 1,
@@ -210,20 +210,19 @@ export const drawPoint = options => {
 
 // 绘制圆形
 export const drawCircle = options => {
-  const { left, top, radius, color, label, strokeWidth = 1, id } = options
+  const { left, top, radius, color, strokeWidth = 1, id } = options
 
   return new fabric.Circle({
     id: id || Date.now(),
     left: left,
     top: top,
     radius: radius,
-
+    color: color,
     fill: false,
     stroke: color,
     strokeWidth: strokeWidth,
     opacity: 1,
     erasable: false,
-    label: label,
     shape: hitShapeTypes.CIRCLE,
     perPixelTargetFind: true,
   })
@@ -231,7 +230,7 @@ export const drawCircle = options => {
 
 // 绘制椭圆形
 export const drawEllipse = options => {
-  const { top, left, rx, ry, color, label, strokeWidth = 1, id } = options
+  const { top, left, rx, ry, color, strokeWidth = 1, id } = options
 
   return new fabric.Ellipse({
     id: id || Date.now(),
@@ -239,13 +238,12 @@ export const drawEllipse = options => {
     top: top,
     rx: rx,
     ry: ry,
-
+    color: color,
     fill: false,
     stroke: color,
     strokeWidth: strokeWidth,
     opacity: 1,
     erasable: false,
-    label: label,
     shape: hitShapeTypes.ELLIPSE,
     perPixelTargetFind: true,
   })
@@ -253,21 +251,22 @@ export const drawEllipse = options => {
 
 // 绘制多边形
 export const drawPolygon = options => {
-  const { points, color, label, strokeWidth = 1, id } = options
+  const { points, color, strokeWidth = 1, id } = options
   const _polygon = new fabric.Polygon(points, {
     id: id || Date.now(),
     // stroke: '#1ae04e',
+    color: color,
     stroke: color,
     shape: hitShapeTypes.POLYGON,
     strokeWidth: strokeWidth,
-    fill: color,
-    // fill: false,
-    opacity: 0.4,
-    // opacity: 1,
+    // fill: color,
+    fill: false,
+    // opacity: 0.4,
+    opacity: 1,
     erasable: false,
     objectCaching: false,
     transparentCorners: false,
-    label,
+    perPixelTargetFind: true,
   })
 
   return _polygon
@@ -275,7 +274,7 @@ export const drawPolygon = options => {
 
 //绘制矩形
 export const drawRectangle = options => {
-  const { beginPoint, endPoint, color, label, strokeWidth = 1, id } = options
+  const { beginPoint, endPoint, color, strokeWidth = 1, id } = options
   let left = beginPoint.x < endPoint.x ? beginPoint.x : endPoint.x
   let top = beginPoint.y < endPoint.y ? beginPoint.y : endPoint.y
   const rect = new fabric.Rect({
@@ -285,6 +284,7 @@ export const drawRectangle = options => {
     width: Math.abs(endPoint.x - beginPoint.x),
     height: Math.abs(endPoint.y - beginPoint.y),
     // fill: color,
+    color: color,
     // stroke: '#1ae04e',
     fill: false,
     stroke: color,
@@ -292,7 +292,6 @@ export const drawRectangle = options => {
     // opacity: 0.4,
     opacity: 1,
     erasable: false,
-    label: label,
     shape: hitShapeTypes.RECT,
     perPixelTargetFind: true,
   })
@@ -309,6 +308,7 @@ export const drawYoloRectangle = options => {
     top: top,
     width: Math.abs(endPoint.x - beginPoint.x),
     height: Math.abs(endPoint.y - beginPoint.y),
+    color: color,
     // fill: color,
     // stroke: '#1ae04e',
     fill: false,

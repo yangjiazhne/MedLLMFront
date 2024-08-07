@@ -4,6 +4,7 @@ import UploadPreAnnotated from './UploadPreAnnotated'
 import UploadDone from './UploadDone'
 import UploadRawData from './UploadRawData'
 import UploadResource from './UploadResource'
+import UploadMrxsFile from './UploadMrxsFile'
 
 const UploadProjectFile = () => {
   const { type: uplaodType } = useQuery()
@@ -16,7 +17,8 @@ const UploadProjectFile = () => {
       {uplaodType === 'Pre-Annotated' && (
         <UploadPreAnnotated handleUploadDone={setFileUploadStats} />
       )}
-      {uplaodType === 'Raw' && <UploadRawData handleUploadDone={setFileUploadStats} />}
+      {/* {uplaodType === 'Raw' && <UploadRawData handleUploadDone={setFileUploadStats} />} */}
+      {uplaodType === 'Raw' && <UploadMrxsFile handleUploadDone={setFileUploadStats} />}
       {uplaodType === 'Resource' && <UploadResource handleUploadDone={setFileUploadStats} />}
     </div>
   )

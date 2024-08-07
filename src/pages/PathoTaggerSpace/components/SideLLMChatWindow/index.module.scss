@@ -1,0 +1,283 @@
+.outerDraggableContainer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+}
+
+.chatWindow {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  top: 200px;
+  z-index: 10;
+  
+  border: 2px solid #577cb4;
+  border-radius: 3px;
+  background-color: #f0f0f0;
+
+  cursor: auto;
+  resize: horizontal;
+
+  pointer-events: auto;
+
+  &.rightSide {
+    right: 0;
+    width: 300px;
+    min-width: 300px;
+    max-width: 600px;
+    height: 600px;
+    min-height: 500px;
+
+    &.resizeBar {
+      display: none;
+      left: 0;
+    }
+  }
+  &.leftSide {
+    left: 0;
+    width: 300px;
+    min-width: 300px;
+    max-width: 600px;
+    height: 700px;
+    flex-direction: row-reverse;
+
+    &.resizeBar {
+      display: none;
+      right: 0;
+    }
+  }
+  &.bottomSide {
+    top: unset;
+    bottom: 0;
+    left: 10vw;
+
+    width: calc(100% - 20vw);
+    min-width: 600px;
+    max-width: 100%;
+    height: 300px;
+    min-height: 200px;
+
+    &> .resizeBar {
+      left: unset;
+      bottom: unset;
+      right: 0;
+      top: 0;
+
+      border: 5px solid transparent;
+      border-top: 5px solid #1b377888;
+      border-right: 5px solid #1b377888;
+    }
+  }
+
+  .resizeBar {
+    height: 0;
+    width: 0;
+    position: absolute;
+    z-index: 100;
+
+    left: 0;
+    bottom: 0;
+
+    cursor: nesw-resize;
+    user-select: none;
+
+    border: 5px solid transparent;
+    border-bottom: 5px solid #1b377888;
+    border-left: 5px solid #1b377888;
+  }
+
+  .controlPanel {
+    display: flex;
+    height: 40px;
+    width: 100%;
+    background-color: #b1bfe0;
+
+    font-size: medium;
+    font-weight: bold;
+
+    align-items: center;
+
+    user-select: none;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    &> div {
+      line-height: 30px;
+    }
+  }
+
+  .chatContainer {  // 主体框架，可滚动
+    overflow-y: scroll;
+    flex: 1;
+
+    scrollbar-width: 0;
+
+    .infoContainer {
+      display: flex;
+      flex-direction: column;
+
+      align-items: center;
+      
+      user-select: none;
+      &.horizen {
+        flex-direction: row;
+        p {
+          flex: 1;
+        }
+
+        .featureCards {
+          grid-template-columns: repeat(4, 25%) !important;
+          grid-template-rows: 100px !important;
+          width: 800px !important;
+        }
+      }
+
+      &> img {
+        height: 100px;
+        width: 100px;
+        overflow: hidden;
+        object-fit: cover;
+        margin: 5px;
+        border-radius: 5px;
+      }
+
+      &> p {
+        font-size: medium;
+        font-weight: bold;
+        margin: 0 10px;
+      }
+
+      .featureCards {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 50%);
+        grid-template-rows: repeat(2, 100px);
+        gap: 1px;
+        &> div {
+          margin: 5px 5px;
+          border-radius: 5px;
+          background-color: white;
+          text-align: center;
+          div {  // Card Header
+            font-weight: bold;
+            font-size: large;
+            margin: 5px;
+          }
+          &> p {  // Card Content
+            color: #888;
+            font-size: medium;
+            line-height: 1rem;
+          }
+        }
+      }
+    }  // END OF INFO CONTAINER
+
+    .chatList {
+      display: flex;
+      flex-direction: column;
+      
+      .chatListItem {
+        display: flex;
+        min-height: 40px;
+
+        margin: 10px;
+        margin-left: 5px;
+
+        &> div {  // 聊天框主体
+          max-width: 80%;
+          padding: 5px;
+
+          font-size: medium;
+
+          border-radius: 5px;
+          background-color: white;
+
+          display: flex;
+          flex-direction: column;
+
+          &> .hr {
+            height: 0;
+            width: 100%;
+            border: .5px solid #aaae;
+          }
+        }
+
+        &::before {
+          content: "";
+          width: 0;
+          height: 0;
+
+          margin: 15px 0;  // Parent - Border
+
+          border: 5px solid transparent;
+          border-right: 5px solid white;
+        }
+
+        &.userContent {  // 用户侧聊天框
+          flex-direction: row-reverse;
+          
+          margin-left: 10px;
+          margin-right: 5px;
+
+          &> div {
+            background-color: #ade470;
+          }
+
+          &::before {
+            border: 5px solid transparent;
+            border-left: 5px solid #ade470;
+          }
+        }
+      }
+    }
+  }
+
+  .inputContainer {
+    background-color: #ddd;
+
+    display: flex;
+    
+    align-items: center;
+    padding: 5px 5px;
+  }
+}
+
+.chatHideIcon {
+  position: absolute;
+  height: 50px;
+  width: 50px;
+
+  border-radius: 25px;
+  background-color: #8888;
+
+  padding: 5px;
+  user-select: none;
+
+  pointer-events: auto;
+  z-index: 100;
+  cursor: grab;
+
+  bottom: 150px;
+  right: 60px;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &> img {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+    object-fit: cover;
+
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+}

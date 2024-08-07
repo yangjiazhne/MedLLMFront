@@ -136,7 +136,7 @@ const TaskProgress = () => {
                         onChange={setActiveTab}
                         style={{ marginBottom: 30, width: '100%' }}
                     >
-                        <Tabs.TabPane tab="数据集创建任务" key="dataset">
+                        <Tabs.TabPane tab="数据上传任务" key="dataset">
                             {datasetCreateTaskList && (
                                 <DatasetTaskTable
                                     taskList={datasetCreateTaskList}

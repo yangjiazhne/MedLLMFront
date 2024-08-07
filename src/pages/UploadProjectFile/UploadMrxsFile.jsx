@@ -1,6 +1,6 @@
 import { uploadFileDT } from '@/request/actions/project'
 import { DeleteOutlined, FileZipOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, message, Progress, Tabs, Upload, Spin } from 'antd'
+import { Button, message, Progress, Tabs, Upload, Spin, Modal } from 'antd'
 import bytes from 'bytes'
 import React, { useState } from 'react'
 import styles from './index.module.scss'
@@ -8,17 +8,18 @@ import styles from './index.module.scss'
 const { TabPane } = Tabs
 const { Dragger } = Upload
 
-const UploadRawData = ({ handleUploadDone }) => {
+const UploadMrxsFile = ({ handleUploadDone }) => {
   const [zipFile, setZipFile] = useState(null)
+  const [txtFile, setTxtFile] = useState(null)
   const [imageList, setImageList] = useState([])
   const [uploading, setUploading] = useState(false)
   const [uploadProcess, setUploadProcess] = useState(0)
-  const [tabValue, setTabValue] = useState('images')
+  const [tabValue, setTabValue] = useState('txt')
 
   const beforeUpload = file => {
-    if (tabValue === 'zip') {
-      setZipFile(file)
-    }
+    if (tabValue === 'txt') {
+        setTxtFile(file)
+    } 
     return false
   }
 
@@ -26,9 +27,54 @@ const UploadRawData = ({ handleUploadDone }) => {
     setImageList(file.fileList)
   }
 
+  const readFile = async file => {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        resolve(reader.result)
+      }
+
+      reader.onerror = () => {
+        reject(reader.error)
+      }
+
+      reader.readAsText(file)
+    })
+  }
+
   const handleSubmit = async () => {
     const projectId = localStorage.getItem('currentProject')
     let res
+    // 上传txt文件
+    if (tabValue === 'txt') {
+        if (!txtFile) {
+          message.error('Please choose a txt file')
+          return
+        }
+        setUploading(true)
+        const content = await readFile(txtFile)
+        const lines = content
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line !== '')
+        const total = lines.length
+        if (total < 1) {
+          Modal.error({
+            content: '输入的txt文件中无有效地址',
+          })
+          return 0
+        }
+        // res = await uploadFileDT(zipFile, projectId, event => setUploadProcess(event.percent))
+        console.log(lines)
+        setUploading(false)
+        // if (res?.err) message.error(res.data || 'something was wrong')
+        // else handleUploadDone(res.data)
+        // handleUploadDone({
+        //     numHitsCreated: successProject,
+        //     numHitsIgnored: lines.length - successProject,
+        //     taskId: taskId,
+        // })
+    }
     // 批量上传图片
     if (tabValue === 'images') {
       if (!imageList.length) {
@@ -68,8 +114,8 @@ const UploadRawData = ({ handleUploadDone }) => {
   }
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <h3 style={{ margin: '20px 0' }}> 上传原始数据 </h3>
+    <div style={{ textAlign: 'center', width: '80%', margin: 'auto' }}>
+      <h3 style={{ margin: '20px 0' }}> 上传病理图数据 </h3>
       <Tabs
         defaultActiveKey="images"
         onChange={key => {
@@ -77,7 +123,25 @@ const UploadRawData = ({ handleUploadDone }) => {
           setUploadProcess(0)
         }}
       >
-        <TabPane tab="图片文件" key="images" disabled={uploading}>
+        <TabPane  tab="txt文本文件" key="txt" disabled={uploading}>
+            <p style={{ opacity: '0.7', fontSize: '17px' }}>
+                请上传文本文件, 根据行数生成项目个数, 文本文件的每行为图片所在文件夹的绝对路径 <br />
+            </p>
+            <div style={{ margin: '20px auto', width: '200px', textAlign: 'left' }}>
+            <Dragger
+              beforeUpload={beforeUpload}
+              showUploadList={true}
+              maxCount={1} 
+              accept=".txt"
+            >
+              <p className="ant-upload-drag-icon">
+                <UploadOutlined />
+              </p>
+              <p className="ant-upload-text">点击或拖拽文件到此区域</p>
+            </Dragger>
+          </div>
+        </TabPane>
+        {/* <TabPane tab="图片文件" key="images" disabled={uploading}>
           <p style={{ opacity: '0.7', fontSize: '17px' }}>
             选择一张或多张（最多20张）图片 <br />
           </p>
@@ -125,7 +189,7 @@ const UploadRawData = ({ handleUploadDone }) => {
               />
             </div>
           )}
-        </TabPane>
+        </TabPane> */}
       </Tabs>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {(uploading || uploadProcess > 0) && (
@@ -152,4 +216,4 @@ const UploadRawData = ({ handleUploadDone }) => {
   )
 }
 
-export default UploadRawData
+export default UploadMrxsFile

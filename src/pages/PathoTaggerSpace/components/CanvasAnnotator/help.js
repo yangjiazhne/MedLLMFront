@@ -35,7 +35,8 @@ export const renderBoxMap = () => {
     fBoxes = boundingBoxMap
       ?.map((box, index) => {
         box.label = box.label || []
-        const color = entityColorMap[box.label[0]] || '#000000'
+        // const color = entityColorMap[box.label[0]] || '#000000'
+        const color = box.color
 
         const id = box.id
         switch (box.type) {

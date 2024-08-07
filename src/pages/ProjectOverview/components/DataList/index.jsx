@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Image, Tooltip, Divider, Col, Row, Space, Modal, Input, Form, Button, Checkbox } from 'antd'
+import { Image, Tooltip, Divider, Col, Row, Space, Modal, Input, Form, Button, Checkbox, Select } from 'antd'
 import { CopyOutlined, FormOutlined, FileSearchOutlined, PlusSquareOutlined, ExportOutlined, ExclamationCircleOutlined  } from '@ant-design/icons'
 import { imgError } from './config'
 import { useHistory, useParams } from 'react-router-dom'
@@ -23,9 +23,9 @@ const HitImage = ({ hitDetail }) => {
         <div className={styles.imgContainer}>
         <div className={styles.imgWrap}>
             <Image
-            src={hitDetail.data}
-            fallback={imgError}
-            style={{ height: '130px', width: '130px'}}
+              src={hitDetail.data}
+              fallback={imgError}
+              style={{ height: '130px', width: '130px'}}
             />
         </div>
 
@@ -140,7 +140,7 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
       };
     const options = groups.map(group => ({ label: group.name, value: group.key }));
     const [checkedList, setCheckedList] = useState([]);
-    const [indeterminate, setIndeterminate] = useState(true);
+    const [indeterminate, setIndeterminate] = useState(false);
     const [checkAll, setCheckAll] = useState(false);
     const onChange = (list) => {
       setCheckedList(list);
@@ -160,6 +160,7 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
         cancelText="取消"
         onCancel={onCancel}
         destroyOnClose
+        okButtonProps={{ disabled: checkedList.length === 0 }}
         okType="danger"
         onOk={()=>{
             onDelete
@@ -187,21 +188,52 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
 }
 
 // 移动图像Modal
-const ImgMoveForm = ({open, onOk, onCancel, hits}) => {
-
-    const [checkedList, setCheckedList] = useState([]);
-    const [indeterminate, setIndeterminate] = useState(true);
-    const [checkAll, setCheckAll] = useState(false);
+const ImgMoveForm = ({open, onOk, onCancel}) => {
+    const {
+      projectHits, // 项目图片信息
+      currentGroup, // 当前组
+    } = useSelector(
+      // @ts-ignore
+      state => state.project
+    )
+    const groups = [
+      { name: '消化道正常组织', key: '1' },
+      { name: '消化道发育及结构异常', key: '2' },
+      { name: '消化道炎症性疾病', key: '3' },
+      // 添加更多选项以测试滚动条功能
+      { name: '测试选项 1', key: '4' },
+      { name: '测试选项 2', key: '5' },
+      { name: '测试选项 3', key: '6' },
+      { name: '测试选项 4', key: '7' },
+      { name: '测试选项 5', key: '8' },
+      { name: '测试选项 6', key: '9' },
+      { name: '测试选项 7', key: '14' },
+      { name: '测试选项 8', key: '15' },
+      { name: '测试选项 9', key: '16' },
+      { name: '测试选项 10', key: '17' },
+      { name: '测试选项 111', key: '18' },
+      { name: '测试选项 12', key: '19' },
+    ];
+    const [checkedList, setCheckedList] = useState([])
+    const [indeterminate, setIndeterminate] = useState(false)
+    const [checkAll, setCheckAll] = useState(false)
+    const [moveGroup, setMoveGroup] = useState(null)
     const onChange = (list) => {
       setCheckedList(list);
-      setIndeterminate(!!list.length && list.length < hits.length);
-      setCheckAll(list.length === hits.length);
+      setIndeterminate(!!list.length && list.length < projectHits.length);
+      setCheckAll(list.length === projectHits.length);
     };
     const onCheckAllChange = (e) => {
-      setCheckedList(e.target.checked ? hits.map(hit => hit.id) : []);
+      setCheckedList(e.target.checked ? projectHits.map(hit => hit.id) : []);
       setIndeterminate(false);
       setCheckAll(e.target.checked);
     };
+    const handleSelectChange = (value) => {
+      console.log(`selected ${value}`);
+      setMoveGroup(value)
+    };
+    const options = groups.map(group => ({ label: group.name, value: group.key, disabled: group.key === currentGroup }));
+
     return (
       <Modal
         visible={open}
@@ -210,35 +242,55 @@ const ImgMoveForm = ({open, onOk, onCancel, hits}) => {
         cancelText="取消"
         onCancel={onCancel}
         destroyOnClose
+        okButtonProps={{ disabled: (checkedList.length === 0 || !moveGroup) }}
         onOk={()=>{
             onOk
             console.log(checkedList)
         }}
       >
-        <div style={{ boxShadow: '0 0 15px #ededed', padding: '10px', borderRadius: '4px' }}>
+        <div style={{ boxShadow: '0 0 15px #ededed', borderRadius: '4px'}}>
+        <div style={{ padding: '10px'}}>
+          移动至
+          <Select
+            placeholder="选择一个分组"
+            style={{ width: 250, marginLeft:'20px' }}
+            onChange={handleSelectChange}
+            options={options}
+          />
+        </div>
+        <div style={{ padding: '10px'}}>
             <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>
                 全部选中
             </Checkbox>
             <Divider style={{ marginTop: '5px', marginBottom: '5px'}} />
-            <div style={{maxHeight: '250px', overflowY: 'auto'}}>
-                <CheckboxGroup value={checkedList} onChange={onChange}>
-                    {hits.map(hit => (
-                        <div key={hit.id} style={{ marginBottom: '4px' }}>
-                            <Checkbox value={hit.id}>
-                                <div>
-                                    <Image
-                                        src={hit.data}
-                                        fallback={imgError}
-                                        style={{ height: '40px', width: '40px'}}
-                                    />
-                                    {getStrWithLen(hit?.fileName.split('thumbnail')[0], 15)}
-                                </div>
-                            </Checkbox>
-                        </div>
-                    ))}
+            <div style={{maxHeight: '250px', overflowY: 'auto', width: '100%'}}>
+                <CheckboxGroup value={checkedList} onChange={onChange} style={{width: '100%'}}>
+                    {projectHits.map(hit => {
+                        const isChecked = checkedList.includes(hit.id);
+                        return (<div key={hit.id} 
+                                      style={{
+                                              marginBottom: '4px',
+                                              backgroundColor: isChecked ? '#f0f0f0' : 'transparent',
+                                              padding: '4px',
+                                              borderRadius: '4px',
+                                            }}>
+                                    <Checkbox value={hit.id} style={{alignItems: 'center'}}>
+                                        <div style={{display:'flex', alignItems: 'center'}}>
+                                            <Image
+                                                src={hit.data}
+                                                fallback={imgError}
+                                                preview={{ mask: null }}
+                                                style={{ height: '40px', width: '40px', marginLeft: '8px', marginRight: '8px'}}
+                                            />
+                                            <div>{getStrWithLen(hit?.fileName.split('thumbnail')[0], 15)}</div>
+                                        </div>
+                                    </Checkbox>
+                                </div>)})}
                 </CheckboxGroup>
             </div>
         </div>
+        </div>
+
       </Modal>
     )
 }
@@ -314,17 +366,18 @@ const DataList = () => {
                         <div className={styles.groupWrap}>
                             {groups.map((group, index) => (
                                 <div className={styles.groupWrapItem} 
-                                     style={{backgroundColor: `${currentGroup === group.key ? '#f2f4f7' : '#fff'}` }}
-                                     onClick={()=>{
-                                        dispatch({
-                                          type: 'UPDATE_CURRENT_GROUP',
-                                          payload: group.key,
-                                        })
-                                      }}>
+                                     key={index}
+                                     style={{backgroundColor: `${currentGroup === group.key ? '#f2f4f7' : '#fff'}` }}>
                                     <div onClick={()=>{setIsEditGroupModalOpen(true)}}>
                                         <FormOutlined style={{ color: '#1890ff' }} />
                                     </div>
-                                    <div className={styles.groupWrapItemName}>
+                                    <div  className={styles.groupWrapItemName}
+                                          onClick={()=>{
+                                            dispatch({
+                                              type: 'UPDATE_CURRENT_GROUP',
+                                              payload: group.key,
+                                            })
+                                          }}>
                                         {getStrWithLen(group.value, 15)}
                                     </div>
                                 </div>
@@ -376,7 +429,6 @@ const DataList = () => {
                                     setIsMoveImgModalOpen(false);
                                   }}
                                 onCancel={()=>{setIsMoveImgModalOpen(false)}}
-                                hits={projectHits}
                             />
                         </div>
                         <Divider style={{ marginTop: '5px', marginBottom: '10px'}} />

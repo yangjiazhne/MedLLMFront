@@ -4,7 +4,7 @@
  * @LastEditors: Azhou
  * @LastEditTime: 2022-03-01 15:49:54
  */
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useHistory, useParams } from 'react-router-dom'
 import { getModelList } from '@/request/actions/task'
 import { useDispatch, useSelector } from 'react-redux'
@@ -29,7 +29,7 @@ import { VButton, VIcon } from '@/components'
 import { UPDATE_ISMUTITAG } from '@/redux/actionTypes'
 import { HexColorPicker } from "react-colorful";
 import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
-
+import Draggable from 'react-draggable'; 
 const { Option } = Select
 
 const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName }) => {
@@ -62,6 +62,27 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
   const [colorPickerOpen, setColorPickerOpen] = useState(false)
   const [taginfoValue, setTaginfoValue] = useState('')
   const [isTagInfoModalOpen, setIsTagInfModalOpen] = useState(false);
+  const [bounds, setBounds] = useState({
+    left: 0,
+    top: 0,
+    bottom: 0,
+    right: 0,
+  });
+  const draggleRef = useRef(null);
+  const onStart = (_event, uiData) => {
+    const { clientWidth, clientHeight } = window.document.documentElement;
+    const targetRect = draggleRef.current?.getBoundingClientRect();
+    if (!targetRect) {
+      return;
+    }
+    setBounds({
+      left: -targetRect.left + uiData.x,
+      right: clientWidth - (targetRect.right - uiData.x),
+      top: -targetRect.top + uiData.y,
+      bottom: clientHeight - (targetRect.bottom - uiData.y),
+    });
+  };
+
   const handleTagInfoModalOk = () => {
     if(currentActiveObj.tagInfo){
       currentActiveObj.tagInfo = taginfoValue
@@ -247,168 +268,175 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
   }
 
   return (
-    <div className={styles.rightBar}>
-      <div className={styles.innerContainer}>
-        <div className={styles.tagHeader}>
-          <p className={styles.partTitle}>标注</p>
-          <CloseOutlined onClick={()=>{setShowTagBox(false)}} style={{ fontSize: '20px' }}/>
-        </div>
-        <div className={styles.partContainer}>
-          <div className={styles.tagContainer}>
-            <div className={styles.shapeHeader}>
-              <p className={styles.shapeTitle}>标注方式</p>
-              <Checkbox checked={isMutiTag} onChange={onChangeMutiTag} style={{color: isMutiTag ? 'rgb(33, 133, 208)' : 'inherit', fontSize: '12px'}}>多次标注</Checkbox>
-            </div>
-            <div className={styles.iconBtnWrap}>
-              {shapes.map((shape, index) => (
-                <BtnDrawRender
-                  key={index}
-                  active={currentShape === shape.value}
-                  icon={shape.icon}
-                  label={shape.label}
-                  title={shape.title}
-                  onClick={() => {
-                    dispatch({
-                      type: 'UPDATE_CURRENT_SHAPE',
-                      payload: shape.value,
-                    })
-                    dispatch({
-                      type: 'UPDATE_CURRENT_CONTROL_TYPE',
-                      payload: contorlTypes.DEFAULT,
-                    })
-                  }}
-                />
-              ))}
-            </div>
-            <Divider style={{ marginTop: '10px', marginBottom: '0', backgroundColor: '#354052' }} />
-            <div className={styles.selectEntity}>
-              <p className={styles.subTitle}>选择颜色</p>
-              <div className={styles.entityWrap}>
-              {
-                colors.map((item, index) => (
-                  <div
-                    className={styles.entityItemWrap}
-                    tabIndex={index}
-                    key={item.value} 
-                    id={item.value} 
-                    style={{
-                      backgroundColor: `${currentColor === item.value && !isCustomColor ? '#25b0e5' : '#56677d'}`,
-                    }}
-                    onClick={()=>{
-                      setIsCustomColor(false)
-                      dispatch({
-                        type: 'UPDATE_CURRENT_COLOR',
-                        payload: item.value,
-                      })
-                    }}
-                  >
-                    <span style={{ backgroundColor: item.value, width: '14px', height: '14px', margin: 'auto 10px'}}>
-                    </span>
-                    {item.label}
+    <>
+      <Draggable handle={`.${styles.tagHeader}`}
+                bounds={bounds}
+                onStart={(event, uiData) => onStart(event, uiData)}>
+          <div className={styles.rightBar}  ref={draggleRef}>
+            <div className={styles.innerContainer}>
+              <div className={styles.tagHeader}>
+                <p className={styles.partTitle}>标注</p>
+                <CloseOutlined onClick={()=>{setShowTagBox(false)}} style={{ fontSize: '20px' }}/>
+              </div>
+              <div className={styles.partContainer}>
+                <div className={styles.tagContainer}>
+                  <div className={styles.shapeHeader}>
+                    <p className={styles.shapeTitle}>标注方式</p>
+                    <Checkbox checked={isMutiTag} onChange={onChangeMutiTag} style={{color: isMutiTag ? 'rgb(33, 133, 208)' : 'inherit', fontSize: '12px'}}>多次标注</Checkbox>
                   </div>
-                ))
-              }
-                <Popover
-                  content={<HexColorPicker color={customColor} onChange={setCustomColor}/>}
-                  trigger="click"
-                  placement="bottomLeft"
-                  open={colorPickerOpen}
-                  zIndex = {9999}
-                  onOpenChange={handleColorPickerOpenChange}
-                >
-                  <div className={styles.entityItemWrap} 
-                        style={{
-                          backgroundColor: `${currentColor === customColor && isCustomColor ? '#25b0e5' : '#56677d'}`,
-                        }}
-                        onClick={()=>{
-                          setIsCustomColor(true)
+                  <div className={styles.iconBtnWrap}>
+                    {shapes.map((shape, index) => (
+                      <BtnDrawRender
+                        key={index}
+                        active={currentShape === shape.value}
+                        icon={shape.icon}
+                        label={shape.label}
+                        title={shape.title}
+                        onClick={() => {
                           dispatch({
-                            type: 'UPDATE_CURRENT_COLOR',
-                            payload: customColor,
+                            type: 'UPDATE_CURRENT_SHAPE',
+                            payload: shape.value,
                           })
-                        }}>
-                      <span style={{ backgroundColor: customColor, width: '14px', height: '14px', margin: 'auto 10px'}}>
-                      </span>
-                      自定义
+                          dispatch({
+                            type: 'UPDATE_CURRENT_CONTROL_TYPE',
+                            payload: contorlTypes.DEFAULT,
+                          })
+                        }}
+                      />
+                    ))}
                   </div>
-                </Popover>
+                  <Divider style={{ marginTop: '10px', marginBottom: '0', backgroundColor: '#354052' }} />
+                  <div className={styles.selectEntity}>
+                    <p className={styles.subTitle}>选择颜色</p>
+                    <div className={styles.entityWrap}>
+                    {
+                      colors.map((item, index) => (
+                        <div
+                          className={styles.entityItemWrap}
+                          tabIndex={index}
+                          key={item.value} 
+                          id={item.value} 
+                          style={{
+                            backgroundColor: `${currentColor === item.value && !isCustomColor ? '#25b0e5' : '#56677d'}`,
+                          }}
+                          onClick={()=>{
+                            setIsCustomColor(false)
+                            dispatch({
+                              type: 'UPDATE_CURRENT_COLOR',
+                              payload: item.value,
+                            })
+                          }}
+                        >
+                          <span style={{ backgroundColor: item.value, width: '14px', height: '14px', margin: 'auto 10px'}}>
+                          </span>
+                          {item.label}
+                        </div>
+                      ))
+                    }
+                      <Popover
+                        content={<HexColorPicker color={customColor} onChange={setCustomColor}/>}
+                        trigger="click"
+                        placement="bottomLeft"
+                        open={colorPickerOpen}
+                        zIndex = {9999}
+                        onOpenChange={handleColorPickerOpenChange}
+                      >
+                        <div className={styles.entityItemWrap} 
+                              style={{
+                                backgroundColor: `${currentColor === customColor && isCustomColor ? '#25b0e5' : '#56677d'}`,
+                              }}
+                              onClick={()=>{
+                                setIsCustomColor(true)
+                                dispatch({
+                                  type: 'UPDATE_CURRENT_COLOR',
+                                  payload: customColor,
+                                })
+                              }}>
+                            <span style={{ backgroundColor: customColor, width: '14px', height: '14px', margin: 'auto 10px'}}>
+                            </span>
+                            自定义
+                        </div>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+                <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
+                <div className={styles.taggerList}>
+                  <p className={styles.taggerListTitle}>标注列表</p>
+                  <ul className={styles.taggerWrap}>
+                    {currentCanvas.getObjects().map((annotation, index) => (
+                      <li key={annotation.id} className={styles.taggerWrapItem}
+                        style={{
+                          backgroundColor: `${currentActiveObj?.id === annotation.id ? '#6c809a' : '#56677d'}`,
+                        }}
+                        onClick={()=>{selectObjectById(annotation.id)}}>
+                        <p className={styles.taggerWrapItemContent}>
+                          <div>
+                            <span style={{marginRight: '20px'}}>{index + 1}</span>
+                            <span>{hitShapeTypeLabels[annotation.shape]}</span>
+                          </div>
+                          <span className={styles.taggerWrapItemColor} style={{backgroundColor: annotation.color}}></span>
+                        </p>
+                        {currentActiveObj?.id === annotation.id && annotation.tagInfo &&
+                        <div className={styles.taggerWrapItemInfo}>{annotation.tagInfo}</div>}
+                        {currentActiveObj?.id === annotation.id && <p className={styles.taggerWrapItemOperate}>
+                          <span className={styles.taggerWrapItemDelete} onClick={deleteActiveObj}>
+                            <VIcon type="icon-shanchu" style={{ fontSize: '16px' }}/>
+                          </span>
+                          <span className={styles.taggerWrapItemText} onClick={()=>{setIsTagInfModalOpen(true)}}>
+                            <VIcon type="icon-wenben" style={{ fontSize: '14px', marginRight:'2px' }}/>
+                            备注
+                          </span>
+                        </p>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <Modal title="标注信息" 
+                    visible={isTagInfoModalOpen} 
+                    onOk={handleTagInfoModalOk} 
+                    onCancel={()=>{setIsTagInfModalOpen(false)}} 
+                    destroyOnClose
+                    okText="保存"
+                    cancelText="取消">
+                <TextArea placeholder="请输入100字以内标注内容" 
+                          showCount 
+                          maxLength={100} 
+                          onChange={handelInfoValueChange}
+                          {...(currentActiveObj?.tagInfo ? { defaultValue: currentActiveObj.tagInfo } : {})}/>
+              </Modal>
+              <div className={styles.iconBtnWrap}>
+                {iconBtns(clearAllObjects, showReDoModal, saveRow, projectHits, space, isDone).map(
+                  (btn, index) => {
+                    if (btn.show)
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            width: btn.width !== '' ? btn.width : '100px',
+                            marginBottom: '10px',
+                            textAlign: 'center',
+                          }}
+                        >
+                          <VButton
+                            color={btn.color}
+                            style={{ width: '100px', padding: '0' }}
+                            onClick={() => btn.onClick(history)}
+                            disabled={btn.disabled}
+                          >
+                            {btn.title}
+                          </VButton>
+                        </div>
+                      )
+                  }
+                )}
               </div>
             </div>
           </div>
-          <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
-          <div className={styles.taggerList}>
-            <p className={styles.taggerListTitle}>标注列表</p>
-            <ul className={styles.taggerWrap}>
-              {currentCanvas.getObjects().map((annotation, index) => (
-                <li key={annotation.id} className={styles.taggerWrapItem}
-                  style={{
-                    backgroundColor: `${currentActiveObj?.id === annotation.id ? '#6c809a' : '#56677d'}`,
-                  }}
-                  onClick={()=>{selectObjectById(annotation.id)}}>
-                  <p className={styles.taggerWrapItemContent}>
-                    <div>
-                      <span style={{marginRight: '20px'}}>{index + 1}</span>
-                      <span>{hitShapeTypeLabels[annotation.shape]}</span>
-                    </div>
-                    <span className={styles.taggerWrapItemColor} style={{backgroundColor: annotation.color}}></span>
-                  </p>
-                  {currentActiveObj?.id === annotation.id && annotation.tagInfo &&
-                  <div className={styles.taggerWrapItemInfo}>{annotation.tagInfo}</div>}
-                  {currentActiveObj?.id === annotation.id && <p className={styles.taggerWrapItemOperate}>
-                    <span className={styles.taggerWrapItemDelete} onClick={deleteActiveObj}>
-                      <VIcon type="icon-shanchu" style={{ fontSize: '16px' }}/>
-                    </span>
-                    <span className={styles.taggerWrapItemText} onClick={()=>{setIsTagInfModalOpen(true)}}>
-                      <VIcon type="icon-wenben" style={{ fontSize: '14px', marginRight:'2px' }}/>
-                      备注
-                    </span>
-                  </p>}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        <Modal title="标注信息" 
-              visible={isTagInfoModalOpen} 
-              onOk={handleTagInfoModalOk} 
-              onCancel={()=>{setIsTagInfModalOpen(false)}} 
-              destroyOnClose
-              okText="保存"
-              cancelText="取消">
-          <TextArea placeholder="请输入100字以内标注内容" 
-                    showCount 
-                    maxLength={100} 
-                    onChange={handelInfoValueChange}
-                    {...(currentActiveObj?.tagInfo ? { defaultValue: currentActiveObj.tagInfo } : {})}/>
-        </Modal>
-        <div className={styles.iconBtnWrap}>
-          {iconBtns(clearAllObjects, showReDoModal, saveRow, projectHits, space, isDone).map(
-            (btn, index) => {
-              if (btn.show)
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      width: btn.width !== '' ? btn.width : '100px',
-                      marginBottom: '10px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <VButton
-                      color={btn.color}
-                      style={{ width: '100px', padding: '0' }}
-                      onClick={() => btn.onClick(history)}
-                      disabled={btn.disabled}
-                    >
-                      {btn.title}
-                    </VButton>
-                  </div>
-                )
-            }
-          )}
-        </div>
-      </div>
-    </div>
+      </Draggable>
+    </>
+
   )
 }
 

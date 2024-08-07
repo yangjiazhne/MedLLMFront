@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
 import { VIcon } from '@/components'
-import Draggable from 'react-draggable'; 
+
 import { hitShapeTypes, contorlTypes } from '@/constants'
 import {
   Card,
@@ -35,7 +35,7 @@ import { getTaskList } from '@/request/actions/task'
 import { imgUploadPre } from '@/constants'
 import { getCurrentResult, handleKeyDown, renderModelInfer } from './help'
 import styles from './PathoTaggerSpace.module.scss'
-import { RightBar, CanvasAnnotator, DoneTopBar, SliceList } from './components'
+import { RightBar, CanvasAnnotator, DoneTopBar, SliceList, SideLLMChatWindow, ResultListWindow } from './components'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 const PathoTaggerSpace = () => {
@@ -329,6 +329,106 @@ const PathoTaggerSpace = () => {
     return null
   }
 
+  const [LLMChatHistory, setLLMChatHistoryInner] = useState([])
+  const LLMChatHistoryTmp = useRef([])
+  const setLLMChatHistory = function(res) {
+    LLMChatHistoryTmp.current = [...res]
+    setLLMChatHistoryInner(res)
+  }
+  // useEffect(() => (setLLMChatHistory([
+  //   {
+  //     id: 0,
+  //     role: "user",
+  //     msg: "This is a message from user side."
+  //   }, {
+  //     id: 1,
+  //     role: "assistant",
+  //     msg: "This is a message from LLM side."
+  //   }, {
+  //     id: 2,
+  //     role: "assistant",
+  //     msg: "This is a message from LLM side and clickable.",
+  //     click: true
+  //   }
+  // ])), [])
+
+  const appendChatContent = function (msg, role="user", click=false) {
+    let chatHistory = LLMChatHistoryTmp.current
+    let maxId = -1
+    for(let chatItem of chatHistory) {
+      maxId = Math.max(chatItem.id, maxId)
+    }
+    let thisChat = {
+      id: maxId,
+      role,
+      msg,
+      click
+    }
+    chatHistory.push(thisChat)
+    setLLMChatHistory(chatHistory)
+  }
+
+  const onMessageCallback = function (content) {
+    console.log("get message send callback", content)
+    appendChatContent(content)
+    appendChatContent(`LLM reply of \"${content}\"`, "assistant", content.indexOf("click") !== -1)
+  }
+
+  const onMessageClick = function (message) {
+    console.log("get message clicked", message)
+  }
+
+  const [resultBtnList, setResultBtnList] = useState([])
+  const onBtnClick = function (resItem) {
+    console.log("resItem clicked", resItem)
+  }
+
+  useEffect(() => {
+    setResultBtnList([
+      {
+        type: 'primary',
+        text: '分级：xxx&xx分期'
+      }, {
+        type: 'warning',
+        text: '分型：粗粱型&xxx'
+      }, {
+        type: 'base',
+        text: 'MVI：10个'
+      }, {
+        type: 'base',
+        text: '预后：5年生存期',
+        borderColor: 'green'
+      }, {
+        type: 'primary',
+        text: '分级：xxx&xx分期'
+      }, 
+      // {
+      //   type: 'warning',
+      //   text: '分型：粗粱型&xxx'
+      // }, {
+      //   type: 'base',
+      //   text: 'MVI：10个'
+      // }, {
+      //   type: 'base',
+      //   text: '预后：5年生存期',
+      //   borderColor: 'green'
+      // },{
+      //   type: 'primary',
+      //   text: '分级：xxx&xx分期'
+      // }, {
+      //   type: 'warning',
+      //   text: '分型：粗粱型&xxx'
+      // }, {
+      //   type: 'base',
+      //   text: 'MVI：10个'
+      // }, {
+      //   type: 'base',
+      //   text: '预后：5年生存期',
+      //   borderColor: 'green'
+      // },
+    ])
+  }, []);
+
   return (
     <Spin spinning={loading}>
       {projectHitsFetchEnd && projectHits.length === 0 && (
@@ -361,42 +461,7 @@ const PathoTaggerSpace = () => {
   
       {projectHitsFetchEnd && projectHits.length !== 0 && (
         <div className={styles.container} ref={boundsRef}>
-            {/* <div className={styles.infoContainer}>
-              <div slot="title">
-                <Button
-                  icon
-                  title="Back"
-                  style={{
-                    width: '35px',
-                    height: '30px',
-                    padding: '4px 7px',
-                    marginRight: '10px',
-                  }}
-                  onClick={() => {
-                    history.push('/userHome/projects/' + currentProjectPid)
-                  }}
-                >
-                  <LeftOutlined />
-                </Button>
-                <Button
-                  icon
-                  title="Home"
-                  style={{
-                    width: '35px',
-                    height: '30px',
-                    padding: '4px 7px',
-                    marginRight: '10px',
-                  }}
-                  onClick={() => history.push('/userHome/my-projects')}
-                >
-                  <HomeOutlined />
-                </Button>
-              </div>
-            </div> */}
           {showTagBox && 
-            <Draggable handle='.RightBar_tagHeader__2afYV'
-            bounds={boundsRef.current}>
-            <div className={styles.tagBox}>
               <RightBar
                 modelName={filterValue.model} // 当前模型名称
                 space={filterValue.status === 'notDone' || isEdit} // 是否是标注状态
@@ -404,17 +469,11 @@ const PathoTaggerSpace = () => {
                 saveRow={handleChangeHitStatus}
                 setIsEdit={setIsEdit}
                 setShowTagBox={setShowTagBox}
-              />
-            </div>
-          </Draggable>}
+              />}
           {showSliceList && (
-            <Draggable handle='.SliceList_sliceListHeader__2GecI'>
-              <div className={styles.SliceBox}>
                 <SliceList
                   setShowSliceList={setShowSliceList}
                 />
-              </div>
-            </Draggable>
           )}
           <div className={styles.viewContainer}>
             {projectHits.length !== 0 && pathoImgInfo.url !== '' && (
@@ -424,6 +483,13 @@ const PathoTaggerSpace = () => {
                 space={filterValue.status === 'notDone' || isEdit}
               />
             )}
+              <ResultListWindow btnList={resultBtnList} onBtnClick={onBtnClick}/>
+              <SideLLMChatWindow
+                  chatHistory={LLMChatHistory}
+                  onMessageSend={onMessageCallback}
+                  onMessageClick={onMessageClick}
+              >
+              </SideLLMChatWindow>
           </div>
         </div>
       )}

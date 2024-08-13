@@ -9,6 +9,7 @@ const SignUp = ({ goToLogin }) => {
 
   // 用户注册
   const onFinish = async values => {
+    return ;  // FOR TEST
     setLoading(true)
     const { firstName, lastName, email, password } = values
     const res = await createUserWithPassword(firstName, lastName, email, password)
@@ -22,90 +23,86 @@ const SignUp = ({ goToLogin }) => {
     else message.error(res.data)
   }
   return (
-    <Form onFinish={onFinish} form={form}>
-      <div className={styles.inlineForm}>
-        <div style={{ marginRight: '10px', width: '50%' }}>
-          <span>名</span>
+    <>
+      <div className={styles.title}>&nbsp;注册</div>
+      <Form onFinish={onFinish} form={form} style={{width: '100%'}}>
+        <div className={styles.formInputItem}>
+          <span>用户名</span>
           <Form.Item
-            name="firstName"
+            name="username"
+            className={styles.antFormItem}
             rules={[
               {
                 required: true,
-                message: '请输入你的名!',
-              },
-              {
-                min: 2,
-                message: '至少输入两个英文字符',
+                message: '请输入用户名!',
               },
             ]}
           >
-            <Input placeholder="名" />
+            <Input placeholder="输入您的用户名"/>
           </Form.Item>
         </div>
-        <div style={{ marginRight: '10px', width: '50%' }}>
-          <span>姓</span>
+        <div className={styles.formInputItem}>
+          <span>邮箱</span>
           <Form.Item
-            name="lastName"
+            name="email"
+            className={styles.antFormItem}
+            rules={[
+              {
+                type: 'email',
+                message: '请输入合法的邮箱地址!',
+              },
+              {
+                required: true,
+                message: '请输入你的邮箱地址!',
+              },
+            ]}
+          >
+            <Input placeholder="me@Email.com"/>
+          </Form.Item>
+        </div>
+        <div className={styles.formInputItem}>
+          <span>密码</span>
+          <Form.Item
+            name="password"
+            className={styles.antFormItem}
             rules={[
               {
                 required: true,
-                message: '请输入你的姓!',
-              },
-              {
-                min: 2,
-                message: '至少输入两个英文字符',
+                message: '请输入你的密码!',
               },
             ]}
           >
-            <Input placeholder="姓" />
+            <Input type="password" placeholder="请输入密码"/>
           </Form.Item>
         </div>
-      </div>
-      <div className={styles.blockForm}>
-        <span>邮箱地址</span>
-        <Form.Item
-          name="email"
-          rules={[
-            {
-              type: 'email',
-              message: '请输入合法的邮箱地址!',
-            },
-            {
-              required: true,
-              message: '请输入你的邮箱地址!',
-            },
-          ]}
-        >
-          <Input placeholder="me@Email.com" />
-        </Form.Item>
-      </div>
-      <div className={styles.blockForm}>
-        <span>密码</span>
-        <Form.Item
-          name="password"
-          rules={[
-            {
-              required: true,
-              message: '请输入你的密码!',
-            },
-            {
-              min: 7,
-              message: '至少输入7位',
-            },
-          ]}
-        >
-          <Input.Password placeholder="请输入密码" />
-        </Form.Item>
-      </div>
-      <div style={{ textAlign: 'center' }}>
-        <Button loading={loading} type="primary" htmlType="submit">
-          注册
-        </Button>
-        <Button type="link" onClick={goToLogin}>
-          返回登录
-        </Button>
-      </div>
-    </Form>
+        <div className={styles.formInputItem}>
+          <span>电话号码</span>
+          <Form.Item
+            name="phone"
+            className={styles.antFormItem}
+          >
+            <Input placeholder="可选"/>
+          </Form.Item>
+        </div>
+        <div className={styles.formInputItem}>
+          <span>主页地址</span>
+          <Form.Item
+            name="profilelink"
+            className={styles.antFormItem}
+          >
+            <Input placeholder="可选"/>
+          </Form.Item>
+        </div>
+        <div className={styles.formBtnItem}>
+          <Button onClick={goToLogin} className={"success-btn " + styles.subBtn}>
+            返回登录
+          </Button>
+          <Button loading={loading} type="primary" htmlType="submit" style={{width:'100%'}}>
+            注册
+          </Button>
+        </div>
+      </Form>
+    </>
   )
 }
 

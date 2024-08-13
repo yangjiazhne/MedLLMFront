@@ -5,12 +5,13 @@
 import React, { createRef, useEffect, useState } from 'react'
 import styles from './index.module.scss'
 import { VButton } from '@/components'
-import { 
-  BorderBottomOutlined, 
-  BorderLeftOutlined, 
-  BorderRightOutlined, 
-  CloseOutlined, 
-  SendOutlined 
+import {
+  BlockOutlined,
+  BorderBottomOutlined,
+  BorderLeftOutlined,
+  BorderRightOutlined,
+  CloseOutlined, MinusOutlined,
+  SendOutlined
 } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 // @ts-ignore
@@ -232,8 +233,13 @@ const SideLLMChatWindow = ({
     }
   }
 
-  const beforeMessageSend = function () {
-    let chatContent = chatInputObject.current.state.value ?? ""
+  const beforeMessageSend = function (event) {
+    let chatContent = ""
+    if(!event) {
+      chatContent = chatInputObject.current.input.defaultValue
+    } else {
+      chatContent = event.nativeEvent.target.value ?? ""
+    }
     if (chatContent === "") {
       return;
     }
@@ -246,7 +252,7 @@ const SideLLMChatWindow = ({
   const handleChatInputKeyDown = function(event) {
     let {keyCode} = event
     if(keyCode == 13) {  // ENTER
-      beforeMessageSend()
+      beforeMessageSend(event)
     }
   }
 
@@ -287,17 +293,14 @@ const SideLLMChatWindow = ({
             <div style={{display: 'flex', flexDirection: 'column', height: '100%', width: '100%'}}>
                 <div className={styles.controlPanel}>  {/* 顶部控制栏 */}
                 <div style={{flex: '1', display: 'flex'}}>
-                  <div className={styles.btnGroup}>
-                  {/* {floatWindowSide !== 'left' && (<VButton onClick={() => setFloatWindowSide('left')}><BorderLeftOutlined /></VButton>)} */}
-                  {floatWindowSide !== 'bottom' && (<Button onClick={() => setFloatWindowSide('bottom')} type='text'><BorderBottomOutlined /></Button>)}
-                  {floatWindowSide !== 'right' && (<Button onClick={() => setFloatWindowSide('right')} type='text'><BorderRightOutlined /></Button>)}
-                  </div>
-                  <div style={{flex: '1', textAlign: 'center'}}>
+                  <div style={{flex: '1', textAlign: 'left', padding: '0 10px'}}>
                     OmniPT
                   </div>
                 </div>
-                <div style={{width: '40px'}}>
-                  <Button type='text' style={{padding: '4px 8px'}} block onClick={() => setChatWindowHide(true)}><CloseOutlined /></Button>
+                <div style={{width: '80px', display: 'flex'}}>
+                  {floatWindowSide !== 'bottom' && (<Button onClick={() => setFloatWindowSide('bottom')} type='text' style={{color: 'white'}}><BlockOutlined /></Button>)}
+                  {floatWindowSide !== 'right' && (<Button onClick={() => setFloatWindowSide('right')} type='text' style={{color: 'white'}}><MinusOutlined /></Button>)}
+                  <Button type='text' style={{padding: '4px 8px', color: 'white'}} block onClick={() => setChatWindowHide(true)}><CloseOutlined /></Button>
                 </div>
               </div>
               <div className={styles.chatContainer}>
@@ -349,8 +352,19 @@ const SideLLMChatWindow = ({
                 </div>
               </div>
               <div className={styles.inputContainer}>
-                <Input placeholder='Type to chat...' type='text' ref={chatInputObject} onChange={handleMessageInput} onKeyDown={handleChatInputKeyDown}/>
-                <Button onClick={beforeMessageSend} disabled={!enableSendBtn}>
+                <Input
+                  placeholder='Type to chat...'
+                  type='text'
+                  ref={chatInputObject}
+                  onChange={handleMessageInput}
+                  onKeyDown={handleChatInputKeyDown}
+                  style={{color: 'white', backgroundColor: '#345', borderColor: '#567'}}
+                />
+                <Button
+                  onClick={() => beforeMessageSend()}
+                  disabled={!enableSendBtn}
+                  style={{padding: '5px', width: '35px', color: enableSendBtn ? 'white' : '#888', backgroundColor: '#345', borderColor: '#567'}}
+                >
                   <SendOutlined />
                 </Button>
               </div>

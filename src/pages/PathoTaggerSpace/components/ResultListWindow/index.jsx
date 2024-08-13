@@ -26,16 +26,19 @@ const ResultListWindow = ({
   const [lastDragMouseStatus, setLastDragMouseStatus] = useState({x: null, y: null})
   const presetTypeStyle = {
     primary: {
-      borderColor: 'white',
-      background: '#9fc559'
+      borderColor: '#ffaee0',
+      background: 'transparent',
+      color: '#ffaee0',
     },
     warning: {
-      borderColor: 'white',
-      background: '#edbb3a'
+      borderColor: '#79fbf3',
+      background: 'transparent',
+      color: '#79fbf3',
     },
     base: {
-      borderColor: 'white',
-      background: 'transparent'
+      borderColor: '#e5c9ff',
+      background: 'transparent',
+      color: '#e5c9ff',
     }
   }
 
@@ -129,7 +132,7 @@ const ResultListWindow = ({
           </div>
       )}
       
-      <div className={styles.miniMize}>
+      <div className={styles.minimize}>
           <div onClick={(e) => beforeMinimizeStatus(null, !minimizeStatus)}
                title="预推理结果"
                style={{backgroundColor: `${minimizeStatus ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}

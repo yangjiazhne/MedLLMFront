@@ -1,0 +1,10 @@
+.ant-input-status-error {
+  border: 1px red solid !important;
+}
+
+.ant-form-item-control {
+  position: relative;
+  &> :nth-child(2) {
+    display: none !important;
+  }
+}

@@ -10,11 +10,11 @@
 .viewerResultBG {
   border-radius: 5px;
   border: 1px solid #eee;
-  background-color: #ccce;
+  background-color: #2831429a;
 
   min-height: 60px;
 
-  max-width: calc(100% - 215px);  // 与Canvas对齐及避开预览小窗的补偿量
+  max-width: calc(100% - 250px);  // 与Canvas对齐及避开预览小窗的补偿量
   margin: 5px 5px 5px 0;
   padding: 3px;
 
@@ -39,7 +39,7 @@
   }
 }
 
-.miniMize{
+.minimize{
   right: 10px;
   position: absolute;
   top: 10px;
@@ -138,12 +138,23 @@
     height: 80%;
     font-weight: bolder;
     font-size: 16px;
-    border: white 3px solid;
+    border: white 2px solid;
+    background: transparent;
   }
 
   .viewerPredictDetailBtn {
-    border: white 3px solid;
+    border: white 2px solid;
     background: transparent;
     box-sizing: border-box;
+
+    & :hover {
+      background: unset;
+      color: white;
+    }
+
+    & :active {
+      background: unset;
+      color: #eee;
+    }
   }
 }

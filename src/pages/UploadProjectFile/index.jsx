@@ -1,9 +1,6 @@
 import useQuery from '@/hooks/useQuery'
 import React, { useState } from 'react'
-import UploadPreAnnotated from './UploadPreAnnotated'
 import UploadDone from './UploadDone'
-import UploadRawData from './UploadRawData'
-import UploadResource from './UploadResource'
 import UploadMrxsFile from './UploadMrxsFile'
 
 const UploadProjectFile = () => {
@@ -14,12 +11,7 @@ const UploadProjectFile = () => {
 
   return (
     <div>
-      {uplaodType === 'Pre-Annotated' && (
-        <UploadPreAnnotated handleUploadDone={setFileUploadStats} />
-      )}
-      {/* {uplaodType === 'Raw' && <UploadRawData handleUploadDone={setFileUploadStats} />} */}
-      {uplaodType === 'Raw' && <UploadMrxsFile handleUploadDone={setFileUploadStats} />}
-      {uplaodType === 'Resource' && <UploadResource handleUploadDone={setFileUploadStats} />}
+      <UploadMrxsFile handleUploadDone={setFileUploadStats} />
     </div>
   )
 }

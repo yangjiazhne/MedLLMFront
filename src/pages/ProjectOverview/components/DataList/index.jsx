@@ -1,37 +1,34 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Image, Tooltip, Divider, Col, Row, Space, Modal, Input, Form, Button, Checkbox, Select } from 'antd'
-import { CopyOutlined, FormOutlined, FileSearchOutlined, PlusSquareOutlined, ExportOutlined, ExclamationCircleOutlined  } from '@ant-design/icons'
+import { Image, Tooltip, Divider, Col, Row, Space, Modal, Input, Form, Button, Checkbox, Select, message, Empty } from 'antd'
+import { FormOutlined, FileSearchOutlined, PlusSquareOutlined, ExportOutlined, ExclamationCircleOutlined  } from '@ant-design/icons'
 import { imgError } from './config'
 import { useHistory, useParams } from 'react-router-dom'
 import styles from './index.module.scss'
 import { copyToClip, getStrWithLen } from '@/helpers/Utils'
-import { imgUploadPre } from '@/constants'
-import { useTranslation } from 'react-i18next'
 import { VButton } from '@/components'
+import { updateGroup,createGroup,deleteGroup,searchGroup} from '@/request/actions/group'
+import { updateImage,createImage,deleteImage,searchImage} from '@/request/actions/image'
 
 const { TextArea } = Input;
 const CheckboxGroup = Checkbox.Group;
 const { confirm } = Modal;
+
 // 单张图像
 const HitImage = ({ hitDetail }) => {
-    if (!hitDetail || !hitDetail.data || !hitDetail.fileName) return (
-        <div></div>
-    )
-
     return (
         <div className={styles.imgContainer}>
         <div className={styles.imgWrap}>
             <Image
-              src={hitDetail.data}
+              src={hitDetail.imageUrl}
               fallback={imgError}
               style={{ height: '130px', width: '130px'}}
             />
         </div>
 
         <p>
-            <span>{getStrWithLen(hitDetail?.fileName.split('thumbnail')[0], 15)}</span>
-            <Tooltip title={hitDetail.fileName.split('thumbnail')}>
+            <span>{getStrWithLen(hitDetail?.imageName.split('thumbnail')[0], 15)}</span>
+            <Tooltip title={hitDetail.imageName.split('thumbnail')}>
                 <FileSearchOutlined className={styles.copyBtn} />
             </Tooltip>
         </p>
@@ -40,13 +37,13 @@ const HitImage = ({ hitDetail }) => {
 }
 
 // 新建分组Modal Form
-const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false}) => {
-    console.log(open, onCreate, onCancel, title, okText, isEdit)
+const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false, editGroup}) => {
     const [form] = Form.useForm();
+    
     if(isEdit){
         form.setFields([
-            { name: 'name', value: '111' },
-            { name: 'description', value: '222' },
+            { name: 'name', value: editGroup.imageGroupName },
+            { name: 'description', value: editGroup.description },
         ])
     }
     return (
@@ -98,57 +95,42 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
 }
 
 // 删除分组Modal
-const GroupDeleteForm = ({open, onDelete, onCancel}) => {
+const GroupDeleteForm = ({open, onDelete, onCancel, currentProjectGroups}) => {
     // 测试用
-    const groups = [
-        { name: '消化道正常组织', key: '1' },
-        { name: '消化道发育及结构异常', key: '2' },
-        { name: '消化道炎症性疾病', key: '3' },
-        // 添加更多选项以测试滚动条功能
-        { name: '测试选项 1', key: '4' },
-        { name: '测试选项 2', key: '5' },
-        { name: '测试选项 3', key: '6' },
-        { name: '测试选项 4', key: '7' },
-        { name: '测试选项 5', key: '8' },
-        { name: '测试选项 6', key: '9' },
-        { name: '测试选项 7', key: '14' },
-        { name: '测试选项 8', key: '15' },
-        { name: '测试选项 9', key: '16' },
-        { name: '测试选项 10', key: '17' },
-        { name: '测试选项 111', key: '18' },
-        { name: '测试选项 12', key: '19' },
-      ];
       const showDeleteConfirm = () => {
+        const deleteGroups = currentProjectGroups.filter(group => checkedList.includes(group.imageGroupId));
         confirm({
           title: '确定删除以下分组?',
           icon: <ExclamationCircleOutlined />,
           content: (<div>
-            {checkedList.map((item, index) => (
-                <div key={index}>{item}</div>
+            {deleteGroups.map((item, index) => (
+                <div key={index}>{item.imageGroupName}</div>
             ))}
           </div>),
           okText: '确定',
           okType: 'danger',
           cancelText: '取消',
-          onOk() {
-            console.log('OK');
-          },
-          onCancel() {
-            console.log('Cancel');
-          },
+          async onOk() {
+            const res = await deleteGroup(checkedList)
+            onDelete()
+            if (!res.err) {
+              message.success('删除成功')
+            } else {
+              message.error(res || '删除失败')
+            }
+          }
         });
       };
-    const options = groups.map(group => ({ label: group.name, value: group.key }));
     const [checkedList, setCheckedList] = useState([]);
     const [indeterminate, setIndeterminate] = useState(false);
     const [checkAll, setCheckAll] = useState(false);
     const onChange = (list) => {
       setCheckedList(list);
-      setIndeterminate(!!list.length && list.length < groups.length);
-      setCheckAll(list.length === groups.length);
+      setIndeterminate(!!list.length && list.length < currentProjectGroups.length);
+      setCheckAll(list.length === currentProjectGroups.length);
     };
     const onCheckAllChange = (e) => {
-      setCheckedList(e.target.checked ? groups.map(group => group.name) : []);
+      setCheckedList(e.target.checked ? currentProjectGroups.map(group => group.imageGroupId) : []);
       setIndeterminate(false);
       setCheckAll(e.target.checked);
     };
@@ -163,8 +145,6 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
         okButtonProps={{ disabled: checkedList.length === 0 }}
         okType="danger"
         onOk={()=>{
-            onDelete
-            console.log(checkedList)
             showDeleteConfirm()
         }}
       >
@@ -175,9 +155,9 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
             <Divider style={{ marginTop: '5px', marginBottom: '5px'}} />
             <div style={{maxHeight: '250px', overflowY: 'auto'}}>
                 <CheckboxGroup value={checkedList} onChange={onChange}>
-                    {groups.map(group => (
-                        <div key={group.key} style={{ marginBottom: '4px' }}>
-                            <Checkbox value={group.name}>{group.name}</Checkbox>
+                    {currentProjectGroups.map(group => (
+                        <div key={group.imageGroupId} style={{ marginBottom: '4px' }}>
+                            <Checkbox value={group.imageGroupId}>{group.imageGroupName}</Checkbox>
                         </div>
                     ))}
                 </CheckboxGroup>
@@ -188,51 +168,33 @@ const GroupDeleteForm = ({open, onDelete, onCancel}) => {
 }
 
 // 移动图像Modal
-const ImgMoveForm = ({open, onOk, onCancel}) => {
+const ImgMoveForm = ({open, onOk, onCancel, dispatch}) => {
     const {
-      projectHits, // 项目图片信息
-      currentGroup, // 当前组
+      currentGroupImages, // 项目图片信息
+      currentProjectGroups,
+      currentGroup
     } = useSelector(
       // @ts-ignore
       state => state.project
     )
-    const groups = [
-      { name: '消化道正常组织', key: '1' },
-      { name: '消化道发育及结构异常', key: '2' },
-      { name: '消化道炎症性疾病', key: '3' },
-      // 添加更多选项以测试滚动条功能
-      { name: '测试选项 1', key: '4' },
-      { name: '测试选项 2', key: '5' },
-      { name: '测试选项 3', key: '6' },
-      { name: '测试选项 4', key: '7' },
-      { name: '测试选项 5', key: '8' },
-      { name: '测试选项 6', key: '9' },
-      { name: '测试选项 7', key: '14' },
-      { name: '测试选项 8', key: '15' },
-      { name: '测试选项 9', key: '16' },
-      { name: '测试选项 10', key: '17' },
-      { name: '测试选项 111', key: '18' },
-      { name: '测试选项 12', key: '19' },
-    ];
     const [checkedList, setCheckedList] = useState([])
     const [indeterminate, setIndeterminate] = useState(false)
     const [checkAll, setCheckAll] = useState(false)
     const [moveGroup, setMoveGroup] = useState(null)
     const onChange = (list) => {
       setCheckedList(list);
-      setIndeterminate(!!list.length && list.length < projectHits.length);
-      setCheckAll(list.length === projectHits.length);
+      setIndeterminate(!!list.length && list.length < currentGroupImages.length);
+      setCheckAll(list.length === currentGroupImages.length);
     };
     const onCheckAllChange = (e) => {
-      setCheckedList(e.target.checked ? projectHits.map(hit => hit.id) : []);
+      setCheckedList(e.target.checked ? currentGroupImages.map(hit => hit.imageId) : []);
       setIndeterminate(false);
       setCheckAll(e.target.checked);
     };
     const handleSelectChange = (value) => {
-      console.log(`selected ${value}`);
       setMoveGroup(value)
     };
-    const options = groups.map(group => ({ label: group.name, value: group.key, disabled: group.key === currentGroup }));
+    const options = currentProjectGroups.map(group => ({ label: group.imageGroupName, value: group.imageGroupId, disabled: group.key === currentGroup }));
 
     return (
       <Modal
@@ -243,9 +205,23 @@ const ImgMoveForm = ({open, onOk, onCancel}) => {
         onCancel={onCancel}
         destroyOnClose
         okButtonProps={{ disabled: (checkedList.length === 0 || !moveGroup) }}
-        onOk={()=>{
-            onOk
-            console.log(checkedList)
+        onOk={async ()=>{
+            onOk();
+            const data = checkedList.map(image => ({
+              imageId: image,
+              newImageGroupId: moveGroup
+            }));
+            const res = await updateImage(data)
+            if (!res.err) {
+              message.success('修改成功')
+              const imageRes = await searchImage(currentGroup.imageGroupId)
+              dispatch({
+                type: 'UPDATE_CURRENT_GROUP_IMAGES',
+                payload: imageRes.data.content
+              })
+            } else {
+              message.error(res || '修改失败')
+            }
         }}
       >
         <div style={{ boxShadow: '0 0 15px #ededed', borderRadius: '4px'}}>
@@ -265,24 +241,24 @@ const ImgMoveForm = ({open, onOk, onCancel}) => {
             <Divider style={{ marginTop: '5px', marginBottom: '5px'}} />
             <div style={{maxHeight: '250px', overflowY: 'auto', width: '100%'}}>
                 <CheckboxGroup value={checkedList} onChange={onChange} style={{width: '100%'}}>
-                    {projectHits.map(hit => {
-                        const isChecked = checkedList.includes(hit.id);
-                        return (<div key={hit.id} 
+                    {currentGroupImages.map(hit => {
+                        const isChecked = checkedList.includes(hit.imageId);
+                        return (<div key={hit.imageId} 
                                       style={{
                                               marginBottom: '4px',
                                               backgroundColor: isChecked ? '#f0f0f0' : 'transparent',
                                               padding: '4px',
                                               borderRadius: '4px',
                                             }}>
-                                    <Checkbox value={hit.id} style={{alignItems: 'center'}}>
+                                    <Checkbox value={hit.imageId} style={{alignItems: 'center'}}>
                                         <div style={{display:'flex', alignItems: 'center'}}>
                                             <Image
-                                                src={hit.data}
+                                                src={hit.imageUrl}
                                                 fallback={imgError}
                                                 preview={{ mask: null }}
                                                 style={{ height: '40px', width: '40px', marginLeft: '8px', marginRight: '8px'}}
                                             />
-                                            <div>{getStrWithLen(hit?.fileName.split('thumbnail')[0], 15)}</div>
+                                            <div>{getStrWithLen(hit?.imageName.split('thumbnail')[0], 15)}</div>
                                         </div>
                                     </Checkbox>
                                 </div>)})}
@@ -295,26 +271,49 @@ const ImgMoveForm = ({open, onOk, onCancel}) => {
     )
 }
 
-const DataList = () => {
+const DataList = ({setUploadImg}) => {
     const {
-        projectHits, // 项目图片信息
+        currentProjectGroups,   //当前数据集所有的组
         currentGroup, // 当前组
+        currentGroupImages  //当前组的图片
       } = useSelector(
         // @ts-ignore
         state => state.project
       )
     const dispatch = useDispatch()
     const history = useHistory()
+
+    // @ts-ignore
     let { projectId } = useParams()
-    // 测试用
-    const groups = [{value: '消化道正常组织', key: '1'},
-                    {value: '消化道发育及结构异常', key: '2'},
-                    {value: '消化道炎症性疾病', key: '3'}]
 
     const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false)
     const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false)
+    const [editGroup, setEditGroup] = useState(currentGroup)
     const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false)
     const [isMoveImgModalOpen, setIsMoveImgModalOpen] = useState(false)
+
+    const fetchGroupAndImage = async() =>{
+      // 获取项目所有的组
+      const projectGroupsRes= await searchGroup(projectId)
+      console.log(projectGroupsRes)
+      dispatch({
+        type: 'UPDATE_CURRENT_PROJECT_GROUPS',
+        payload: projectGroupsRes.data.content,
+      })
+
+      dispatch({
+        type: 'UPDATE_CURRENT_GROUP',
+        payload: projectGroupsRes.data.content[0],
+      })
+      
+      // 获取index为0的组下所有的图片信息
+      const imageRes = await searchImage(projectGroupsRes.data.content[0].imageGroupId)
+      dispatch({
+        type: 'UPDATE_CURRENT_GROUP_IMAGES',
+        payload: imageRes.data.content
+      })
+
+    }
 
     return(
         <div className={styles.DataGroupListContainer}>
@@ -346,15 +345,48 @@ const DataList = () => {
                             </div>
                             <GroupDeleteForm
                                 open={isDeleteGroupModalOpen}
-                                onDelete={()=>{setIsDeleteGroupModalOpen(false)}}
+                                onDelete={
+                                  ()=>{
+                                    setIsDeleteGroupModalOpen(false)
+                                    fetchGroupAndImage()
+                                  }}
                                 onCancel={()=>{setIsDeleteGroupModalOpen(false)}}
+                                currentProjectGroups={currentProjectGroups}
                             />
                             <GroupCreateForm 
                                 open={isAddGroupModalOpen}
-                                onCreate={(values) => {
-                                    console.log('Received values of form: ', values);
-                                    setIsAddGroupModalOpen(false);
-                                  }}
+                                onCreate={async (values) => {
+                                  const matchingGroup = currentProjectGroups.find(
+                                    group => group.imageGroupName === values.name
+                                  );
+                                  if(matchingGroup){
+                                    Modal.error({
+                                      title: '该分组名称已存在！',
+                                      content: '请更换一个分组名称',
+                                    });
+                                    return
+                                  }
+                                  const res = await createGroup({
+                                    projectId: projectId,
+                                    targetGroups:[
+                                      {
+                                        name: values.name,
+                                        description: values.description
+                                      },
+                                    ]
+                                  })
+                                  setIsAddGroupModalOpen(false);
+                                  if (!res.err) {
+                                    message.success('创建成功')
+                                    const projectGroupsRes= await searchGroup(projectId)
+                                    dispatch({
+                                      type: 'UPDATE_CURRENT_PROJECT_GROUPS',
+                                      payload: projectGroupsRes.data.content,
+                                    })
+                                  } else {
+                                    message.error(res || '创建失败')
+                                  }
+                                }}
                                 title={"新建分组"}
                                 okText={"创建"}
                                 onCancel={()=>{setIsAddGroupModalOpen(false)}}
@@ -364,34 +396,71 @@ const DataList = () => {
                         <Divider style={{ marginTop: '5px', marginBottom: '10px'}} />
                         {/* 分组导航 */}
                         <div className={styles.groupWrap}>
-                            {groups.map((group, index) => (
+                            {currentProjectGroups.map((group, index) => (
                                 <div className={styles.groupWrapItem} 
                                      key={index}
-                                     style={{backgroundColor: `${currentGroup === group.key ? '#f2f4f7' : '#fff'}` }}>
-                                    <div onClick={()=>{setIsEditGroupModalOpen(true)}}>
+                                     style={{backgroundColor: `${currentGroup.imageGroupId === group.imageGroupId ? '#f2f4f7' : '#fff'}` }}>
+                                    <div onClick={()=>{setIsEditGroupModalOpen(true);setEditGroup(group)}}>
                                         <FormOutlined style={{ color: '#1890ff' }} />
                                     </div>
-                                    <div  className={styles.groupWrapItemName}
-                                          onClick={()=>{
+                                    <div className={styles.groupWrapItemName}
+                                          onClick={async ()=>{
                                             dispatch({
                                               type: 'UPDATE_CURRENT_GROUP',
-                                              payload: group.key,
+                                              payload: group,
+                                            })
+                                            const imageRes = await searchImage(group.imageGroupId)
+                                            dispatch({
+                                              type: 'UPDATE_CURRENT_GROUP_IMAGES',
+                                              payload: imageRes.data.content
                                             })
                                           }}>
-                                        {getStrWithLen(group.value, 15)}
+                                        {getStrWithLen(group.imageGroupName, 15)}
                                     </div>
                                 </div>
                             ))}
                             <GroupCreateForm 
                                 open={isEditGroupModalOpen}
-                                onCreate={(values) => {
-                                    console.log('Received values of form: ', values);
+                                onCreate={async (values) => {
+                                    const matchingGroup = currentProjectGroups.find(
+                                      group => group.imageGroupName === values.name
+                                    );
+                                    if(matchingGroup && matchingGroup.imageGroupId!==editGroup.imageGroupId){
+                                      Modal.error({
+                                        title: '该分组名称已存在！',
+                                        content: '请更换一个分组名称',
+                                      });
+                                      return
+                                    }
+                                    const res = await updateGroup({targetGroups: [
+                                      {
+                                        groupId: editGroup.imageGroupId,
+                                        name: values.name,
+                                        description: values.description
+                                      }]})
                                     setIsEditGroupModalOpen(false);
+                                    if (!res.err) {
+                                      message.success('修改成功')
+                                      // 获取项目所有的组
+                                      const projectGroupsRes= await searchGroup(projectId)
+                                      dispatch({
+                                        type: 'UPDATE_CURRENT_PROJECT_GROUPS',
+                                        payload: projectGroupsRes.data.content,
+                                      })
+                                      const gp = projectGroupsRes.data.find(group => group.imageGroupId === currentGroup.imageGroupId)
+                                      dispatch({
+                                        type: 'UPDATE_CURRENT_GROUP',
+                                        payload: gp,
+                                      })
+                                    } else {
+                                      message.error(res || '修改失败')
+                                    }
                                   }}
                                 onCancel={()=>{setIsEditGroupModalOpen(false)}}
                                 title={"编辑组信息"}
                                 okText={"完成"}
                                 isEdit={true}
+                                editGroup={editGroup}
                             />
                         </div>
                     </div>
@@ -424,21 +493,29 @@ const DataList = () => {
                             </div>
                             <ImgMoveForm 
                                 open={isMoveImgModalOpen}
-                                onOk={(values) => {
-                                    console.log('Received values of form: ', values);
+                                onOk={() => {
                                     setIsMoveImgModalOpen(false);
                                   }}
                                 onCancel={()=>{setIsMoveImgModalOpen(false)}}
+                                dispatch={dispatch}
                             />
                         </div>
                         <Divider style={{ marginTop: '5px', marginBottom: '10px'}} />
                         {/* 图像列表 */}
                         <div>
-                            <Space wrap>
-                                {projectHits.slice(0, 200).map(hit => (
-                                    <HitImage hitDetail={hit} key={hit.id} />
+                            {currentGroupImages.length !==0 ? (
+                              <Space wrap>
+                                {currentGroupImages.map(hit => (
+                                    <HitImage hitDetail={hit} key={hit.imageId} />
                                 ))}
-                            </Space>
+                             </Space>
+                            ):(
+                              <Empty
+                                style={{ marginTop: '50px' }}
+                                description={<h2 className={styles.noItems}>数据列表为空</h2>}
+                              >
+                              </Empty>
+                            )}
                         </div>
                     </div>
                 </Col>

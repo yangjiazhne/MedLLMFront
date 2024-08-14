@@ -2,18 +2,15 @@ import { PYTHON_SERVER_WS } from '@/constants'
 import { DUMMY_UID, DUMMY_TOKEN } from './Utils'
 
 export const clearSessionStorage = () => {
-  window.sessionStorage.removeItem('uid')
   window.sessionStorage.removeItem('token')
 }
 
-export const getUidToken = () => {
+export const getToken = () => {
   let token = window.sessionStorage.getItem('token')
-  let uid = window.sessionStorage.getItem('uid')
-  if (!uid || !token || uid === null || token === null) {
-    uid = DUMMY_UID
+  if ( !token  || token === null) {
     token = DUMMY_TOKEN
   }
-  return { uid, token }
+  return token
 }
 
 export const connectWS = ()=>{

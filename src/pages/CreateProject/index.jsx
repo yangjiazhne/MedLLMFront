@@ -2,14 +2,10 @@ import CreateProjectView from './createProject'
 import UploadDone from './UploadDone'
 import React, { useState } from 'react'
 
-const CreateProject = ( {handleUploadDone} ) => {
-    const [fileUploadStats, setFileUploadStats] = useState(null)
-
-    if (fileUploadStats) return <UploadDone fileUploadStats={fileUploadStats} />
-
+const CreateProject = () => {
     return (
         <div>
-            <CreateProjectView handleUploadDone={setFileUploadStats}/>
+            <CreateProjectView/>
         </div>
     )
 }

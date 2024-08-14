@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useHistory } from 'react-router-dom'
-import { changePassword, getHomeData } from '@/request/actions/user'
 import { useDispatch, useSelector } from 'react-redux'
 import styles from './index.module.scss'
 import { Dropdown, Input, Menu, Modal, Tooltip } from 'antd'
@@ -26,11 +25,6 @@ const Navbar = () => {
   }, [language])
 
   useEffect(() => {
-    // 获取用户信息并存储到redux
-    if (isLogin) fetchData()
-  }, [isLogin])
-
-  useEffect(() => {
     const uid = window.sessionStorage.getItem('uid')
     const token = window.sessionStorage.getItem('token')
     // 已登录状态
@@ -42,32 +36,6 @@ const Navbar = () => {
     }
   }, [])
 
-  
-  const fetchData = async () => {
-    // 获取用户信息和用户的所有数据集
-    const res = await getHomeData()
-    if (!res.err) {
-      const { userDetails, projects, orgName } = res.data
-      dispatch({
-        type: 'UPDATE_USER_DETAIL',
-        payload: {
-          ...userDetails,
-          orgName,
-        },
-      })
-      // const _projects = projects.map(v => v.projectDetails)
-      // dispatch({
-      //   type: 'UPDATE_USER_PROJECTS',
-      //   payload: _projects,
-      // })
-    } else {
-      Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
-        onOk: () => logOut(history),
-      })
-    }
-  }
 
   const logout = () => {
     Modal.confirm({
@@ -75,22 +43,6 @@ const Navbar = () => {
       content: '确定要退出登录吗',
       onOk: () => logOut(history),
     })
-  }
-
-  const onChangePwd = async () => {
-    if (password.length < 7) {
-      setShowError(true)
-      return
-    }
-    setShowError(false)
-    const res = await changePassword(user.email, password)
-    if (!res.err) {
-      setIsModalVisible(false)
-      Modal.success({
-        content: 'password change success, you need login again with your new password',
-        onOk: () => logOut(history),
-      })
-    }
   }
 
   const goToIntroduction = () => {
@@ -130,37 +82,19 @@ const Navbar = () => {
             <Dropdown
               overlay={
                 <Menu>
-                  <Menu.Item onClick={() => setIsModalVisible(true)}>{t('change password')}</Menu.Item>
+                  {/* <Menu.Item onClick={() => setIsModalVisible(true)}>{t('change password')}</Menu.Item> */}
                   <Menu.Item onClick={logout}>{t('logout')}</Menu.Item>
                 </Menu>
               }
             >
               <span>
-                {t('greeting') + `, ${user?.firstName}`}
+                {/* {t('greeting') + `, ${user?.firstName}`} */}
                 <DownOutlined style={{ marginLeft: '5px' }} />
               </span>
             </Dropdown>
           )}
         </div>
       </div>
-      
-        
-      <Modal
-        title="Reset Password"
-        destroyOnClose
-        visible={isModalVisible}
-        onOk={onChangePwd}
-        onCancel={() => setIsModalVisible(false)}
-      >
-        {showError && <p style={{ color: 'red' }}>Password should be at least 7 letters long</p>}
-
-        <Input
-          placeholder="please input new password"
-          type="password"
-          onChange={e => setPassword(e.target.value)}
-          value={password}
-        />
-      </Modal>
     </div>
   )
 }

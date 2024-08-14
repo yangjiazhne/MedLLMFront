@@ -9,6 +9,8 @@ import {
   UPDATE_USER_PROJECTS,
   UPDATE_CURRENT_USER_PROJECTS,
   UPDATE_CURRENT_USER_PROJECTS_LENGTH,
+  UPDATE_CURRENT_USER_GROUPS,
+  UPDATE_CURRENT_USER_GROUPS_LENGTH,
   UPDATE_USER_LOGIN,
   UPDATE_WS_INSTANCE,
 } from '../actionTypes'
@@ -19,7 +21,10 @@ export const userInitialState = {
   userProjects: [],
   wsInstance: {},
   currentUserProjects: [],
-  currentUserProjectsLength: 0
+  currentUserProjectsLength: 0,
+  currentUserGroups: [],
+  currentUserGroupsLength: 0,
+
 }
 
 const user = function (state = userInitialState, action) {
@@ -52,6 +57,18 @@ const user = function (state = userInitialState, action) {
       return {
         ...state,
         currentUserProjectsLength: action.payload
+      }
+    }
+    case UPDATE_CURRENT_USER_GROUPS: {
+      return {
+        ...state,
+        currentUserGroups: action.payload
+      }
+    }
+    case UPDATE_CURRENT_USER_GROUPS_LENGTH: {
+      return {
+        ...state,
+        currentUserGroupsLength: action.payload
       }
     }
     case UPDATE_WS_INSTANCE: {

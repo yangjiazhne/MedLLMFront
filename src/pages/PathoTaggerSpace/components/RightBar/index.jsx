@@ -1,15 +1,6 @@
-/*
- * @Author: Azhou
- * @Date: 2021-06-21 15:11:53
- * @LastEditors: Azhou
- * @LastEditTime: 2022-03-01 15:49:54
- */
 import React, { useState, useEffect, useRef } from 'react'
 import { useHistory, useParams } from 'react-router-dom'
-import { getModelList } from '@/request/actions/task'
 import { useDispatch, useSelector } from 'react-redux'
-import { getInferResult, getPathoSegRef } from '@/request/actions/tagger'
-import { getUidToken } from '@/helpers/dthelper'
 import { iconBtns, shapes, controls, colors } from './config'
 import styles from './index.module.scss'
 import {
@@ -32,31 +23,20 @@ import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fa
 import Draggable from 'react-draggable'; 
 const { Option } = Select
 
-const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName }) => {
+const RightBar = ({ setShowTagBox }) => {
   const {
-    projectHits, // 项目图片信息
-    projectDetails, // 项目详情
-    entities, 
-    boundingBoxMap,
-    strokeWidth,
     currentColor,
     currentCanvas,
     currentShape,
     currentActiveObj,
     currentViewer,
-    currentControlType,
-    currentModelInference,
-    pathoViewSize,
     isMutiTag
   } = useSelector(
     // @ts-ignore
     state => state.project
   )
   const dispatch = useDispatch()
-  const history = useHistory()
   const { TextArea } = Input;
-  const [modelList, setModelList] = useState([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [customColor, setCustomColor] = useState('#d92bdd');
   const [isCustomColor, setIsCustomColor] = useState(false)
   const [colorPickerOpen, setColorPickerOpen] = useState(false)
@@ -98,36 +78,10 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
     // 重新渲染画布
     currentCanvas.renderAll();
   };
+
   const handleColorPickerOpenChange = (newOpen) => {
     setColorPickerOpen(newOpen);
   };
-
-  // 这里是获取模型列表的函数，暂时先不加入推理任务，前端先放在这里
-  const fetchModelList = async () => {
-    const res = await getModelList()
-    if (!res.err) {
-      const allModelList = res.data.data
-      const tags = JSON.parse(projectDetails.taskRules).tags.split(',')
-      // 筛选符合条件的model
-      const availableModelList = allModelList.filter(model => {
-        return (
-          taskTypes[model.type].value === projectDetails.task_type &&
-          arraysEqualIgnoreOrder(tags, model.labels)
-        )
-      })
-      setModelList(availableModelList)
-      if (availableModelList.length > 0) {
-        dispatch({
-          type: 'UPDATE_CURRENT_MODEL_INFERENCE',
-          payload: availableModelList[0].modelName,
-        })
-      }
-    }
-  }
-
-  useEffect(() => {
-    fetchModelList()
-  }, [projectDetails])
 
   useEffect(() => {
     if(isCustomColor){
@@ -138,65 +92,65 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
     }
   }, [customColor])
 
-  const clearAllObjects = () => {
-    Modal.confirm({
-      title: '提示',
-      icon: <ExclamationCircleOutlined />,
-      content: '是否清除所有标注信息?',
-      okText: '是',
-      cancelText: '否',
-      onOk: () => {
-        if (boundingBoxMap.length > 0) {
-          dispatch({
-            type: 'UPDATE_BOUNDING_BOX_MAP',
-            payload: [],
-          })
-        }
-        // 先清除画布上的标注，再重新渲染
-        currentCanvas.remove(...currentCanvas.getObjects())
-        currentCanvas.renderAll()
-      },
-    })
-  }
+  // const clearAllObjects = () => {
+  //   Modal.confirm({
+  //     title: '提示',
+  //     icon: <ExclamationCircleOutlined />,
+  //     content: '是否清除所有标注信息?',
+  //     okText: '是',
+  //     cancelText: '否',
+  //     onOk: () => {
+  //       if (boundingBoxMap.length > 0) {
+  //         dispatch({
+  //           type: 'UPDATE_BOUNDING_BOX_MAP',
+  //           payload: [],
+  //         })
+  //       }
+  //       // 先清除画布上的标注，再重新渲染
+  //       currentCanvas.remove(...currentCanvas.getObjects())
+  //       currentCanvas.renderAll()
+  //     },
+  //   })
+  // }
 
-  const reDoObjects = () => {
-    Modal.confirm({
-      title: '提示',
-      icon: <ExclamationCircleOutlined />,
-      content: '请确认修改GT标注信息',
-      okText: '是',
-      cancelText: '否',
-      onOk() {
-        setIsEdit(true)
-      },
-      onCancel() {
-        // if (boundingBoxMap.length > 0) {
-        //   dispatch({
-        //     type: 'UPDATE_BOUNDING_BOX_MAP',
-        //     payload: [],
-        //   })
-        // }
-        // currentCanvas.remove(...currentCanvas.getObjects())
-        // currentCanvas.renderAll()
-        // setIsEdit(true)
-      },
-    })
-  }
+  // const reDoObjects = () => {
+  //   Modal.confirm({
+  //     title: '提示',
+  //     icon: <ExclamationCircleOutlined />,
+  //     content: '请确认修改GT标注信息',
+  //     okText: '是',
+  //     cancelText: '否',
+  //     onOk() {
+  //       setIsEdit(true)
+  //     },
+  //     onCancel() {
+  //       // if (boundingBoxMap.length > 0) {
+  //       //   dispatch({
+  //       //     type: 'UPDATE_BOUNDING_BOX_MAP',
+  //       //     payload: [],
+  //       //   })
+  //       // }
+  //       // currentCanvas.remove(...currentCanvas.getObjects())
+  //       // currentCanvas.renderAll()
+  //       // setIsEdit(true)
+  //     },
+  //   })
+  // }
 
-  const showReDoModal = () => {
-    if (projectDetails.task_type.indexOf('IMAGE_CLASSIFICATION') !== -1) {
-      setIsEdit(true)
-    } else if (
-      projectDetails.task_type.indexOf('IMAGE_SEGMENTATION') !== -1 ||
-      projectDetails.task_type.indexOf('IMAGE_DETECTION') !== -1
-    ) {
-      reDoObjects()
-    }
-    dispatch({
-      type: 'UPDATE_CURRENT_ENTITY',
-      payload: entities[0],
-    })
-  }
+  // const showReDoModal = () => {
+  //   if (projectDetails.task_type.indexOf('IMAGE_CLASSIFICATION') !== -1) {
+  //     setIsEdit(true)
+  //   } else if (
+  //     projectDetails.task_type.indexOf('IMAGE_SEGMENTATION') !== -1 ||
+  //     projectDetails.task_type.indexOf('IMAGE_DETECTION') !== -1
+  //   ) {
+  //     reDoObjects()
+  //   }
+  //   dispatch({
+  //     type: 'UPDATE_CURRENT_ENTITY',
+  //     payload: entities[0],
+  //   })
+  // }
 
   const handelInfoValueChange = (event) => {
     if(event && event.target && event.target.value){
@@ -259,10 +213,10 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
       onOk: () => {
         currentCanvas.remove(currentActiveObj).requestRenderAll()
         // 维护boundingBoxMap数组
-        dispatch({
-          type: 'UPDATE_BOUNDING_BOX_MAP',
-          payload: boundingBoxMap.filter(box => box.id !== currentActiveObj.id),
-        })
+        // dispatch({
+        //   type: 'UPDATE_BOUNDING_BOX_MAP',
+        //   payload: boundingBoxMap.filter(box => box.id !== currentActiveObj.id),
+        // })
       },
     })
   }
@@ -406,7 +360,7 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
                           onChange={handelInfoValueChange}
                           {...(currentActiveObj?.tagInfo ? { defaultValue: currentActiveObj.tagInfo } : {})}/>
               </Modal>
-              <div className={styles.iconBtnWrap}>
+              {/* <div className={styles.iconBtnWrap}>
                 {iconBtns(clearAllObjects, showReDoModal, saveRow, projectHits, space, isDone).map(
                   (btn, index) => {
                     if (btn.show)
@@ -431,7 +385,7 @@ const RightBar = ({ space, isDone, saveRow, setIsEdit, setShowTagBox, modelName 
                       )
                   }
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
       </Draggable>

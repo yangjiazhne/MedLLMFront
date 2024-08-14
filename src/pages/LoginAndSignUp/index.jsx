@@ -1,9 +1,3 @@
-/*
- * @Author: Azhou
- * @Date: 2021-11-12 16:39:08
- * @LastEditors: Azhou
- * @LastEditTime: 2022-03-01 16:56:02
- */
 import React, { useEffect, useState } from 'react'
 import { Navbar, FixedFooter } from '@/components/index'
 import { useHistory } from 'react-router-dom'
@@ -22,8 +16,7 @@ const LoginAndSignUp = () => {
 
   // 登录/注册成功后的回调函数
   const handleSave = res => {
-    const { id, token } = res
-    window.sessionStorage.setItem('uid', id)
+    const token = res.data
     window.sessionStorage.setItem('token', token)
     dispatch({
       type: 'UPDATE_USER_LOGIN',

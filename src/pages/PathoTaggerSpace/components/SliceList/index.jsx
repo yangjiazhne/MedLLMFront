@@ -2,19 +2,28 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CloseOutlined } from '@ant-design/icons'
 import styles from './index.module.scss'
-import {Divider, Collapse, Button } from 'antd'
+import {Divider, Collapse, Button, Spin, Image, Input, InputNumber,Empty } from 'antd'
 import Draggable from 'react-draggable'; 
 const { Panel } = Collapse;
+import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
+import { imgError } from './config'
+const { Search } = Input;
+import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 
-const SliceList = ({setShowSliceList}) => {
+const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize}) => {
     const {
-        projectHits, // 项目图片信息
-        currentGroup, // 当前组
+        currentGroupImages, // 项目图片信息
+        currentProjectGroups,
+        currentGroup,
+        currentImage,
+        currentGroupLength
       } = useSelector(
         // @ts-ignore
         state => state.project
       )
+    const dispatch = useDispatch()
 
+    const [loading, setLoading] = useState(false)
     const [bounds, setBounds] = useState({
         left: 0,
         top: 0,
@@ -36,31 +45,49 @@ const SliceList = ({setShowSliceList}) => {
         });
       };
 
-    
-    //测试用
-    const groups = [
-        { name: '消化道正常组织', key: '1' },
-        { name: '消化道发育及结构异常', key: '2' },
-        { name: '消化道炎症性疾病', key: '3' },
-        // 添加更多选项以测试滚动条功能
-        { name: '测试选项 1', key: '4' },
-        { name: '测试选项 2', key: '5' },
-        { name: '测试选项 3', key: '6' },
-        { name: '测试选项 4', key: '7' },
-        { name: '测试选项 5', key: '8' },
-        { name: '测试选项 6', key: '9' },
-        { name: '测试选项 7', key: '14' },
-        { name: '测试选项 8', key: '15' },
-        { name: '测试选项 9', key: '16' },
-        { name: '测试选项 10', key: '17' },
-        { name: '测试选项 111', key: '18' },
-        { name: '测试选项 12', key: '19' },
-    ];
+    const onChangeGroup = async (key) => {
+        if(key){
+            const group = currentProjectGroups.find(g => g.imageGroupId === Number(key));
 
-    const onChangeGroup = (key) => {
-        console.log(key);
+            dispatch({
+                type: 'UPDATE_CURRENT_GROUP',
+                payload: group,
+            })
+    
+            setLoading(true)
+    
+            const imageRes = await searchImage(group.imageGroupId)
+            dispatch({
+                type: 'UPDATE_CURRENT_GROUP_IMAGES',
+                payload: imageRes.data.content
+            })
+    
+            setLoading(false)
+        }
     }
 
+    const changeImage = async (image) => {
+      dispatch({
+        type: 'UPDATE_CURRENT_IMAGE',
+        payload: image,
+      })
+
+      //获取病理图信息
+      const pathoImageInfo = await fetchImageTileInfo(24,24)
+      dispatch({
+        type: 'UPDATE_PROJECT_PATHOIMGINFO',
+        payload: pathoImageInfo,
+      })
+    }
+
+    const onSearch = (value) => {
+        console.log(value.trim())
+        setSearchValue(value.trim())
+    }
+
+    const changePageNum = (value) => [
+        setCurrentPage(Math.floor(value))
+    ]
 
     return (
         <>
@@ -73,43 +100,60 @@ const SliceList = ({setShowSliceList}) => {
                             <p className={styles.sliceListTitle}>切片列表</p>
                             <CloseOutlined onClick={()=>{setShowSliceList(false)}} style={{ fontSize: '20px' }}/>
                         </div>
-                        <Divider style={{ marginTop: '10px', marginBottom: '5px', backgroundColor: '#354052' }} />
+                        <Search
+                            placeholder="搜索分组"
+                            onSearch={onSearch}
+                            className={styles.SearchBar}
+                            style={{
+                                width: '100%',
+                                marginTop: '5px'
+                            }}
+                        />
+                        <Divider style={{ marginTop: '5px', marginBottom: '5px', backgroundColor: '#354052' }} />
                         <div className={styles.sliceListBody}>
-                            <Collapse defaultActiveKey={[currentGroup]} onChange={onChangeGroup} style={{border:'1px solid #272b33', backgroundColor:'transparent'}} className={styles.customCollapse}>
-                                {groups.map(group => (
-                                    <Panel header={group.name} key={group.key} style={{backgroundColor:'#414e5f', border:'1px solid #272b33', marginBottom:'2px'}}>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
-                                        <div style={{padding:'30px'}}>
-                                            test
-                                        </div>
+                            <Collapse accordion
+                                      onChange={onChangeGroup} 
+                                      style={{border:'1px solid #272b33', backgroundColor:'transparent'}} 
+                                      className={styles.customCollapse}>
+                                {currentProjectGroups.map(group => (
+                                    <Panel header={group.imageGroupName} key={group.imageGroupId} 
+                                           style={{backgroundColor:'#414e5f', border:'1px solid #272b33', marginBottom:'2px'}}>
+                                        <Spin spinning={loading && group === currentGroup}>
+                                        {currentGroupImages.length > 0 ? 
+                                         ((currentGroupImages.map(image => (
+                                            <div className={styles.sliceItem}
+                                                 style={{backgroundColor: `${currentImage.imageId === image.imageId  ? 'rgba(65, 78, 95, .5)' : 'rgba(65, 78, 95, .8)'}`,
+                                                         color: `${currentImage.imageId === image.imageId  ? '#fff' : '#25b0e5'}`}}
+                                                 onClick={()=>{changeImage(image)}}>
+                                                <Image
+                                                    src={image.imageUrl}
+                                                    fallback={imgError}
+                                                    style={{ height: '64px', width: '64px'}}
+                                                />
+                                                <div style={{ width: '130px',wordWrap: 'break-word', marginLeft:'5px' }}>{image.imageName}</div>
+                                            </div>
+                                        )))):
+                                        (<Empty image={Empty.PRESENTED_IMAGE_SIMPLE} style={{height: '80px', marginTop: '15px', marginBottom:'0'}}/>)}
+                                        </Spin>
                                     </Panel>
                                 ))}
-
                             </Collapse>
                         </div>
                         <Divider style={{ marginTop: '10px', marginBottom: '10px', backgroundColor: '#354052' }} />
                         <div className={styles.sliceListFoot}>
-                            {/* <div className={styles.sliceListFootButton}>上一张</div> */}
-                            <Button type="primary" ghost>
-                                上一张
+                            <Button disabled={currentPage===1} className={styles.disabledButton} onClick={()=>{setCurrentPage(currentPage-1)}}>
+                                上一页
                             </Button>
-                            <div><strong>1</strong> / 1</div>
-                            <Button type="primary" ghost>
-                                下一张
+                            <div><InputNumber min={1} max={currentGroupLength} 
+                                              className={styles.inputNumberControl}
+                                              value={currentPage}
+                                              onChange={changePageNum}
+                                              onPressEnter={changePageNum}
+                                              style={{width: '24px', color: '#f0f0f0'}}
+                                              bordered={false} size='small'/>
+                                / {currentGroupLength}</div>
+                            <Button disabled={currentPage===currentGroupLength} className={styles.disabledButton}  onClick={()=>{setCurrentPage(currentPage+1)}}>
+                                下一页
                             </Button>
                         </div>
                     </div>

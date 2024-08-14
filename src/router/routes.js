@@ -12,6 +12,7 @@ import {
   ProjectOverview,
   UploadProjectFile,
   PathoTaggerSpace,
+  MyGroupDatasets
 } from '../pages'
 
 import UploadDone from '../pages/CreateProject/UploadDone'
@@ -38,6 +39,9 @@ const routes = [
         component: UploadProjectFile,
       },
       { path: '/userHome/projects/overview', component: ProjectOverview },
+      { path: '/userHome/groups/:projectId',
+        component: MyGroupDatasets,
+      },
       { path: '/userHome/projects/:projectId', exact: true, component: ProjectOverview },
       {
         path: '/userHome/test',

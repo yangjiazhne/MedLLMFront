@@ -3,10 +3,11 @@ import store from '@/redux/store'
 // @ts-ignore
 const fabric = window.fabric
 
-export const zoomHandler = (event, dispatch, setZooming, setSpotSize, setPosition) => {
+export const zoomHandler = (event, dispatch, setZooming, setPosition) => {
   const { project } = store.getState()
   const {
-    currentCanvas
+    currentCanvas,
+    strokeWidth
   } = project
 
   const activeObject = currentCanvas.getActiveObject();
@@ -27,23 +28,23 @@ export const zoomHandler = (event, dispatch, setZooming, setSpotSize, setPositio
   // 根据当前放大倍数,调整图形属性
   var zoom = event.zoom
   if (zoom) {
-    const radius = 12 / zoom
+    const radius = 1 / zoom
     dispatch({
       type: 'UPDATE_CIRCLERADIUS',
       payload: radius,
     })
 
     // 调整边框和自由划线的线宽
-    const strokeWidth = 6 / zoom
+    const strokeWidth = 1 / zoom
     dispatch({
       type: 'UPDATE_STROKEWIDTH',
       payload: strokeWidth,
     })
-
-    //调整spot大小
-    const spotSize = 6 / zoom
-    setSpotSize(spotSize)
   }
+
+  currentCanvas.forEachObject(function (object) {
+    object.set('strokeWidth', strokeWidth);
+  })
 
   // 根据当前放大倍数，初始化视窗内图片大小
   // 获取视窗的位置和大小

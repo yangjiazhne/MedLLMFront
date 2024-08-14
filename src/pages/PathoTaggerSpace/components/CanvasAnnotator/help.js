@@ -16,7 +16,6 @@ import {
   drawEllipse,
   drawPolygon,
   drawRectangle,
-  drawYoloRectangle,
   polygonPositionHandler,
 } from './utils'
 
@@ -70,15 +69,6 @@ export const renderBoxMap = () => {
               label: box.label,
               strokeWidth: box.strokeWidth,
             })
-          case 'yoloRect':
-            return drawYoloRectangle({
-              id,
-              beginPoint: { x: box.points[0][0] / scaleFactor, y: box.points[0][1] / scaleFactor },
-              endPoint: { x: box.points[2][0] / scaleFactor, y: box.points[2][1] / scaleFactor },
-              color,
-              label: box.label,
-              strokeWidth: box.strokeWidth,
-            })
           case 'polygon':
             return drawPolygon({
               id,
@@ -124,25 +114,6 @@ export const renderBoxMap = () => {
                 erasable: false,
               }
             )
-          // case 'asm_path':
-          //   return new fabric.Path(box.path, {
-          //     id: index,
-          //     fill: hexToRgba(color, 0.4),
-          //     // fill: false,
-          //     strokeWidth: 5,
-          //     stroke: color,
-          //     label: box.label,
-          //     shape: hitShapeTypes.PATH,
-          //     // lockMovementX: true,
-          //     // lockMovementY: true,
-          //     lockRotation: true,
-          //     lockScalingFlip: true,
-          //     lockScalingX: true,
-          //     lockScalingY: true,
-          //     lockSkewingX: true,
-          //     lockSkewingY: true,
-          //     erasable: false,
-          //   })
         }
       })
       .filter(Boolean)

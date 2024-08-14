@@ -1,0 +1,44 @@
+.titleWrap {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 40px;
+    .title {
+      flex: 1;
+      font-weight: 500;
+      font-size: 24px;
+      text-align: center;
+    }
+  }
+  .projectsWrap {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .filterWrap {
+    width: 95%;
+    margin-bottom: -10px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    .filterContainer {
+      display: flex;
+      align-items: center;
+      width: 18%;
+      .filterTitle{
+        width: 40%;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+      }
+      .filterSelect{
+        width: 100px;
+        height: 32px;
+      }
+    }
+    .filterButtonContainer{
+      margin-left: 30px;
+      width: 10%;
+    }
+  }

@@ -1,9 +1,3 @@
-/*
- * @Author: Azhou
- * @Date: 2021-05-20 22:52:08
- * @LastEditors: Azhou
- * @LastEditTime: 2021-11-24 20:27:45
- */
 import { primaryColor } from '@/constants'
 import React from 'react'
 import { uploadTypes } from './config'

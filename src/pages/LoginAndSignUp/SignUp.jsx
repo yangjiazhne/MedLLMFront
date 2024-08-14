@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Form, Input, Button, message, Modal } from 'antd'
 import styles from './index.module.scss'
-import { createUserWithPassword } from '@/request/actions/user'
+import { userRegister } from '@/request/actions/user'
 
 const SignUp = ({ goToLogin }) => {
   const [form] = Form.useForm()
@@ -11,7 +11,7 @@ const SignUp = ({ goToLogin }) => {
   const onFinish = async values => {
     setLoading(true)
     const { firstName, lastName, email, password } = values
-    const res = await createUserWithPassword(firstName, lastName, email, password)
+    const res = await userRegister(firstName+lastName, email, password)
 
     setLoading(false)
     if (!res.err) Modal.success({

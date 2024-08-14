@@ -37,13 +37,9 @@ export const fabricObjAddEvent = (
   panningCanvas, // 是否正在拖拽画布
   moveCount, // 移动计数
   pathGroupArr, // 画笔模式下的路径数组
-  setDrawingPath, // 设置是否正在绘制路径
   setChangeSession, // 设置是否改变了画布内容
   setLoadingInfo, //  设置loading信息
-  updateLabel, // 更新目前选择的标签
-  space, // 是否status标注为notDone 或 isEdit是否是true（表示重新进入编辑状态）
   firstClick, // 记录第一次点击状态
-  isEditLine, // 当前是否在编辑已有自由路径
   ControlTypeChangeTODRAG,  //更改控制方式
   ChangeActiveObj, //更新目前选中对象
   dispatch
@@ -56,11 +52,10 @@ export const fabricObjAddEvent = (
         // 已禁用了canvas的多选
         return
       ChangeActiveObj(o.selected[0])
-      if (o.selected && o.selected.length > 0 && o.selected[0].label) {
-        updateLabel(o.selected[0].label[0])
-      }
       const bl = o.selected[0].aCoords.bl
       const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
+
+      o.selected[0].set('fill','rgba(0,0,0,0.2)')
 
       setPosition({
         left: _relativeBl.x,
@@ -72,11 +67,11 @@ export const fabricObjAddEvent = (
     'selection:updated': o => {
       if (o.selected.length > 1) return
       ChangeActiveObj(o.selected[0])
-      if (o.selected && o.selected.length > 0 && o.selected[0].label) {
-        updateLabel(o.selected[0].label[0])
-      }
       const bl = o.selected[0].aCoords.bl
       const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
+
+      o.selected[0].set('fill','rgba(0,0,0,0.2)')
+
       setPosition({
         left: _relativeBl.x,
         top: _relativeBl.y,
@@ -86,10 +81,10 @@ export const fabricObjAddEvent = (
     },
     'selection:cleared': o => {
       ChangeActiveObj(null)
+      canvas.forEachObject(function (object) {
+        object.set('fill', false);
+      })
       setPosition({ left: 0, top: 0, display: 'none' })
-      if (!space) {
-        updateLabel('')
-      }
     },
     'object:removed': o => {
       setChangeSession(true)
@@ -316,7 +311,8 @@ export const fabricObjAddEvent = (
               drawingObject,
               mouseFrom,
               currentColor,
-              strokeWidth
+              strokeWidth,
+              false
             )
           }
 
@@ -354,7 +350,8 @@ export const fabricObjAddEvent = (
               drawingObject,
               mouseFrom,
               currentColor,
-              strokeWidth
+              strokeWidth,
+              false
             )
           }
           // console.log(canvas.isDrawingMode)
@@ -450,7 +447,8 @@ export const fabricObjAddEvent = (
               drawingObject,
               mouseFrom,
               currentColor,
-              strokeWidth
+              strokeWidth,
+              true
             )
             drawingObject.current = null
             drawingEllipse.current = false
@@ -497,7 +495,8 @@ export const fabricObjAddEvent = (
                 drawingObject,
                 mouseFrom,
                 currentColor,
-                strokeWidth
+                strokeWidth,
+                true
               )
             }
 
@@ -511,14 +510,6 @@ export const fabricObjAddEvent = (
               type: 'UPDATE_CURRENT_CANVAS',
               payload: currentCanvas,
             })
-          }
-          if (canvas.isDrawingMode && canvas.brushMode === 'pencil') {
-            setDrawingPath(true)
-            // 画笔模式
-            o.currentTarget.set({
-              shape: hitShapeTypes.PATH,
-            })
-            pathGroupArr.current.push(o.currentTarget)
           }
           break
         // 拖拽模式下处理鼠标抬起事件
@@ -589,7 +580,8 @@ const generateRect = (
   drawingObject,
   mouseFrom,
   fillColor,
-  strokeWidth
+  strokeWidth,
+  isfinish
 ) => {
   if (drawingObject.current) {
     // 清除上一次绘制的矩形
@@ -601,6 +593,7 @@ const generateRect = (
     endPoint,
     color: fillColor,
     strokeWidth: strokeWidth,
+    isfinish: isfinish
   })
   canvas.add(rect)
   drawingObject.current = rect
@@ -644,7 +637,8 @@ const generateEllipse = (
   drawingObject,
   mouseFrom,
   fillColor,
-  strokeWidth
+  strokeWidth,
+  isfinish
 ) => {
   if (drawingObject.current) {
     // 清除上一次绘制的椭圆形
@@ -662,6 +656,7 @@ const generateEllipse = (
     ry,
     color: fillColor,
     strokeWidth: strokeWidth,
+    isfinish: isfinish
   })
   canvas.add(ellipse)
   drawingObject.current = ellipse

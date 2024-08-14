@@ -1,9 +1,3 @@
-/*
- * @Author: Azhou
- * @Date: 2021-10-25 23:14:47
- * @LastEditors: Azhou
- * @LastEditTime: 2021-11-27 09:49:59
- */
 import React from 'react'
 import {
   CodeOutlined,
@@ -16,10 +10,6 @@ import {
 export const getOptionsBtn = ({
   history,
   downloadFile,
-  // deleteProject,
-  // projectDetails,
-  // createByMe,
-  // addData,
 }) => {
   let result = [
     {
@@ -33,34 +23,11 @@ export const getOptionsBtn = ({
       onClick: () => downloadFile('zip'),
     },
   ]
-  // if (createByMe)
-  //   result.unshift(
-  //     {
-  //       icon: <PlusSquareOutlined style={{ color: 'green' }} />,
-  //       title: '添加数据',
-  //       onClick: addData,
-  //     },
-  //     {
-  //       icon: <FormOutlined style={{ color: 'purple' }} />,
-  //       title: '编辑数据集',
-  //       onClick: () => history.push(`/userHome/import?id=${projectDetails.id}`),
-  //     },
-  //     {
-  //       icon: <DeleteOutlined style={{ color: 'red' }} />,
-  //       title: '删除数据集',
-  //       onClick: deleteProject,
-  //     }
-  //   )
   return result
 }
 
 export const uploadTypes = [
   { uploadType: 'Raw', header: 'uploadRawData', desc: 'uploadRawDesc' },
-  // {
-  //   uploadType: 'Pre-Annotated',
-  //   header: 'Upload Pre-Annotated Data',
-  //   desc: 'If you have some data which is already pre-annotated and want to go through annotations and correct them.',
-  // },
   {
     uploadType: 'Resource',
     header: 'uploadResourceData',

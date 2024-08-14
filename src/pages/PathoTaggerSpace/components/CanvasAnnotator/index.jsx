@@ -6,12 +6,10 @@ import { useDispatch, useSelector } from 'react-redux'
 import useQuery from '@/hooks/useQuery'
 import { Button, Modal, Spin, Tooltip, message, Card, Input  } from 'antd'
 import styles from './index.module.scss'
-import { getImageSize } from '@/helpers/Utils'
 import { CheckOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { hitShapeTypes, contorlTypes, hitShapeTypeLabels } from '@/constants'
 import { getDrawCursor } from './utils'
 import { fabricObjAddEvent } from './fabricObjAddEvent'
-import TopRightWidget from './TopRightWidget'
 import { generatePolygon } from './fabricObjAddEvent'
 import { zoomHandler, animationEndHandler, animationHandler } from './handler'
 import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
@@ -20,12 +18,7 @@ import { VIcon } from '@/components'
 const fabric = window.fabric
 const { TextArea } = Input;
 const CanvasAnnotator = ({
-  setChangeSession,
-  setIsEdit,
-  space,
-  // setClassificationModel,
-  // setSelectedModels,
-  // setIsCheckedNone,
+  setChangeSession
 }) => {
   // 初始化openSeadragon图片查看器
   // 初始化 openSeadragon
@@ -93,31 +86,23 @@ const CanvasAnnotator = ({
   }
 
   const dispatch = useDispatch()
-  const windowWidth = (window.innerWidth * 80) / 100
-  const windowHeight = 700
 
   // console.log(window.innerWidth, window.innerHeight)
   const {
     // currentHit,
     pathoImgInfo,
     projectHits,
-    entityColorMap,
-    currentEntity,
     currentColor,
     currentShape,
-    currentViewer,
     currentCanvas,
     currentActiveObj,
     currentControlType,
-    boundingBoxMap,
-    SAMMode,
+    currentImage,
     strokeWidth
   } = useSelector(
     // @ts-ignore
     state => state.project
   )
-
-  let queryInfo = useQuery()
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
@@ -131,9 +116,6 @@ const CanvasAnnotator = ({
   const panningCanvas = useRef(false) // 是否正在拖动canvas
 
   const [loadingInfo, setLoadingInfo] = useState({ flag: true, text: '加载中...' })
-
-  // 控制自由绘制的【绘制、编辑】按钮的【位置、显示】
-  const [isEditLine, setIsEditLine] = useState(false)
 
   // 控制object的【删除、编辑】按钮的【位置、显示】
   const [position, setPosition] = useState({ left: 0, top: 0, display: 'none', type: '' })
@@ -161,8 +143,6 @@ const CanvasAnnotator = ({
 
   // 绘制自由形状的辅助变量
   const tempInObject = useRef(false) // 当前鼠标临时位于的object
-  const [spotSize, setSpotSize] = useState(5) // 自由绘制时，笔触/橡皮擦 的大小粗细
-  const [drawingPath, setDrawingPath] = useState(false) // 是否正在绘制自由形状
   const pathGroupArr = useRef([]) // 当前绘制的自由形状的路径数组【自由形状绘制完成后要从页面清除】 【多条路径】
 
   // const [currentZoomLevel, setCurrentZoomLevel] = useState(1) // 当前放大倍数
@@ -191,14 +171,6 @@ const CanvasAnnotator = ({
     }
   }
 
-  const isFreeDraw = useMemo(
-    () =>
-      currentEntity &&
-      currentShape === hitShapeTypes.MANUALCLOSE &&
-      currentControlType === 'default',
-    [currentEntity, currentShape, currentControlType]
-  )
-
   // 初始化openSeadragon 图片查看器  和  canvas overlay
   useLayoutEffect(() => {
     const _viewer = initOpenSeaDragon()
@@ -208,6 +180,7 @@ const CanvasAnnotator = ({
       payload: _viewer,
     })
 
+    //@ts-ignore
     const overlay = _viewer.fabricjsOverlay({
       scale: 1000,
     })
@@ -253,25 +226,21 @@ const CanvasAnnotator = ({
       panningCanvas,
       moveCount,
       pathGroupArr,
-      setDrawingPath,
       setChangeSession,
       setLoadingInfo,
-      updateLabel,
-      space,
       firstClick,
-      isEditLine,
       ControlTypeChangeTODRAG,
       ChangeActiveObj,
       dispatch
     )
-  }, [space])
+  }, [pathoImgInfo])
 
   // 根据当前放大倍数，调整参数
   useEffect(() => {
     if (!viewer) return
     // 添加事件监听器
     viewer.addHandler('zoom', function (event) {
-      zoomHandler(event, dispatch, setZooming, setSpotSize, setPosition)
+      zoomHandler(event, dispatch, setZooming, setPosition)
     })
     viewer.addHandler('animation', function(event) {
       animationHandler(event, dispatch, setZooming, setPosition)
@@ -287,36 +256,23 @@ const CanvasAnnotator = ({
 
   // 画布初始化，显示之前的标注信息
   useEffect(() => {
-    if (!projectHits || projectHits.length === 0) return
+    // if (!projectHits || projectHits.length === 0) return
     if (!canvasInstance.current) return
     setLoadingInfo({ flag: true, text: '图片加载中...' })
     canvasInstance.current.clear()
     canvasInstance.current.setViewportTransform([1, 0, 0, 1, 0, 0])
-    setIsEdit(false)
 
     //改变画布的视口位置
     setLoadingInfo({ flag: false, text: '' })
     // 渲染已有的标注信息
-    renderBoxMap()
+    // renderBoxMap()
     // 重置修改标志位
     setChangeSession(false)
-  }, [projectHits, canvasInstance.current])
-
-  useEffect(() => {
-    if (isFreeDraw) {
-      startDrawingPathWithType('pencil')
-    } else {
-      canvasInstance.current.isDrawingMode = false
-    }
-  }, [isFreeDraw])
+  }, [canvasInstance.current])
 
   useEffect(() => {
     variableInit()
-    // 如果标签改变了，重新设置画笔颜色和标签
-    if (isFreeDraw) {
-      startDrawingPathWithType('pencil')
-    }
-  }, [currentShape, currentEntity])
+  }, [currentShape])
 
   useEffect(() => {
     if (!viewer) return
@@ -360,21 +316,11 @@ const CanvasAnnotator = ({
     })
   }
 
-  const updateLabel = async labelSelected => {
-    await dispatch({
-      type: 'UPDATE_CURRENT_ENTITY',
-      payload: labelSelected,
-    })
-  }
-
   // 变量重新初始化
   const variableInit = () => {
     if (!canvasInstance.current) return
     const canvas = canvasInstance.current
     // 当前还有未完成的自由路径和多边形
-    if (drawingPath) {
-      generateFreeLine()
-    }
     if (drawingPolygon) {
       generatePolygon(
         canvas,
@@ -401,98 +347,9 @@ const CanvasAnnotator = ({
     drawingPolygon.current = false
   }
 
-  // 开启自由绘制模式，设置画笔和橡皮擦大小
-  const startDrawingPathWithType = type => {
-    // 拖拽模式下不允许绘制
-    if (currentControlType === 'drag') return
-    const canvas = canvasInstance.current
-    canvas.isDrawingMode = true
-    canvas.brushMode = type
-    if (type === 'pencil') {
-      // 自由绘制
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
-      canvas.freeDrawingCursor = `url(${getDrawCursor(6)}) ${6} ${6}, crosshair`
-      canvas.freeDrawingBrush.width = spotSize
-      canvas.freeDrawingBrush.color = entityColorMap[currentEntity]
-    } else if (type === 'eraser') {
-      // 让橡皮擦默认为笔触的3倍大
-      canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
-      canvas.freeDrawingCursor = `url(${getDrawCursor(15)}) ${15} ${15}, crosshair`
-      canvas.freeDrawingBrush.width = spotSize * 3
-    }
-  }
-
   const setZoom = size => {
     viewer.viewport.zoomTo(size);
     viewer.viewport.applyConstraints();
-  }
-
-  // 将当前选中的自由路径再次设置为编辑状态时，调用次函数来进行状态修改
-  const setLineToEdit = () => {
-    // 先改变当前的形状，触发变量状态重置variableInit
-    dispatch({
-      type: 'UPDATE_CURRENT_SHAPE',
-      payload: hitShapeTypes.MANUALCLOSE,
-    })
-
-    setIsEditLine(true)
-    const currentObj = canvasInstance.current.getActiveObject()
-    dispatch({
-      type: 'UPDATE_CURRENT_ENTITY',
-      payload: currentObj.label ? currentObj.label[0] : '',
-    })
-
-    currentObj.set({
-      erasable: true,
-    })
-    pathGroupArr.current.push(currentObj)
-    //延迟修改，确保所有的修改都被应用到 canvas 对象上，然后再取消选中状态
-    setTimeout(() => {
-      canvasInstance.current.discardActiveObject().requestRenderAll()
-    }, 0)
-  }
-
-  useEffect(() => {
-    console.log(drawingPath)
-  }, [drawingPath])
-
-  // 自由绘制完成，处理多条路径和被擦除的点
-  const generateFreeLine = () => {
-    pathGroupArr.current.forEach(path => canvasInstance.current.remove(path))
-    const groupItems = [...pathGroupArr.current]
-
-    let _entity = ''
-    if (currentEntity) {
-      _entity = currentEntity
-    } else {
-      // 根据路径颜色尝试反推label
-      for (const key in entityColorMap) {
-        if (entityColorMap[key] === groupItems[0].stroke) {
-          _entity = key
-          break
-        }
-      }
-    }
-    let newPath = handleMultiPath(groupItems, canvasInstance.current, true)
-    if (newPath) {
-      newPath.label = [_entity]
-      canvasInstance.current
-        .add(newPath)
-        .setActiveObject(newPath)
-        .remove(drawingObject.current)
-        .requestRenderAll()
-    }
-    // 在boundingBoxMap中删除编辑前的路径
-    if (drawingObject.current) {
-      dispatch({
-        type: 'UPDATE_BOUNDING_BOX_MAP',
-        payload: boundingBoxMap.filter(box => box.id !== drawingObject.current.id),
-      })
-    }
-    pathGroupArr.current = []
-    drawingObject.current = null
-    setDrawingPath(false)
-    setIsEditLine(false)
   }
 
   // 删除某一标注物体
@@ -506,11 +363,6 @@ const CanvasAnnotator = ({
       onOk: () => {
         const obj = canvasInstance.current.getActiveObject()
         canvasInstance.current.remove(obj).requestRenderAll()
-        // 维护boundingBoxMap数组
-        dispatch({
-          type: 'UPDATE_BOUNDING_BOX_MAP',
-          payload: boundingBoxMap.filter(box => box.id !== obj.id),
-        })
       },
     })
   }
@@ -558,39 +410,7 @@ const CanvasAnnotator = ({
               <div>长度：{(currentActiveObj.height * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
             </div>
           </div>
-          {position.type === 'path' && (
-            <div className={styles.editIcon} onClick={setLineToEdit}>
-              <EditOutlined />
-            </div>
-          )}
         </div>}
-        {currentEntity && currentShape === hitShapeTypes.MANUALCLOSE  // 自由绘制模式或者EISeg模式下, 显示控制按钮 TopRightWidget
-            && (
-            <div className={styles.drawingFreeMode}>
-              <div className={styles.sizeControl}>
-                <TopRightWidget
-                  canvas={canvasInstance.current}
-                  spotSize={spotSize}
-                  drawingFree={startDrawingPathWithType}
-                  setSpotSize={setSpotSize}
-                  setLoadingInfo={setLoadingInfo}
-                />
-              </div>
-              {(isEditLine || drawingPath) && (
-                <Tooltip title="finish this object">
-                  <Button
-                    type="primary"
-                    onClick={() => {
-                      if (isEditLine || drawingPath) generateFreeLine()
-                    }}
-                    style={{ marginTop: '10px' }}
-                  >
-                    {isEditLine ? '结束修改' : drawingPath ? '结束绘制' : '结束交互'}
-                  </Button>
-                </Tooltip>
-              )}
-            </div>
-          )}
       </Spin>
       {viewer && <div className={styles.zoomBtn}>
         <div className={styles.rbLabel}>{`${viewer.viewport.getZoom(true).toFixed(1)}x`}</div>

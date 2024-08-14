@@ -1,30 +1,50 @@
-import { uploadFileDT } from '@/request/actions/project'
 import { DeleteOutlined, FileZipOutlined, UploadOutlined } from '@ant-design/icons'
-import { Button, message, Progress, Tabs, Upload, Spin, Modal } from 'antd'
+import { createImage } from '@/request/actions/image'
+import { Form, Select, Button, message, Progress, Tabs, Upload, Spin, Modal } from 'antd'
 import bytes from 'bytes'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './index.module.scss'
-
+import { useHistory } from 'react-router'
+import { useParams } from 'react-router-dom'
 const { TabPane } = Tabs
 const { Dragger } = Upload
+import { searchGroup} from '@/request/actions/group'
 
 const UploadMrxsFile = ({ handleUploadDone }) => {
-  const [zipFile, setZipFile] = useState(null)
+  const [form] = Form.useForm()
   const [txtFile, setTxtFile] = useState(null)
-  const [imageList, setImageList] = useState([])
   const [uploading, setUploading] = useState(false)
   const [uploadProcess, setUploadProcess] = useState(0)
   const [tabValue, setTabValue] = useState('txt')
+  const [errorMsg, setErrorMsg] = useState()
+  const history = useHistory()
+  const [options, setOptions] = useState([])
+  //@ts-ignore
+  let {projectId} = useParams()
+
+
+  // 获取项目所有的组
+  const fetchGroup = async() => {
+    const projectGroupsRes= await searchGroup(projectId)
+    const groups = projectGroupsRes.data.content 
+
+    const value = groups.map(group => ({
+      value: group.imageGroupId,
+      label: group.imageGroupName
+    }));
+
+    setOptions(value)
+  }
+
+  useEffect(() => {
+    fetchGroup()
+  }, [])
 
   const beforeUpload = file => {
     if (tabValue === 'txt') {
         setTxtFile(file)
     } 
     return false
-  }
-
-  const onImageChange = file => {
-    setImageList(file.fileList)
   }
 
   const readFile = async file => {
@@ -42,9 +62,9 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
     })
   }
 
-  const handleSubmit = async () => {
-    const projectId = localStorage.getItem('currentProject')
-    let res
+  const handleSubmit = async values => {
+    const { group } = values
+    
     // 上传txt文件
     if (tabValue === 'txt') {
         if (!txtFile) {
@@ -62,54 +82,24 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
           Modal.error({
             content: '输入的txt文件中无有效地址',
           })
+          setUploading(false)
           return 0
         }
-        // res = await uploadFileDT(zipFile, projectId, event => setUploadProcess(event.percent))
-        console.log(lines)
+        const res = await createImage({
+          imageGroupId: group,
+          imageTypeId: 1,
+          imageUrls: lines
+        })
         setUploading(false)
-        // if (res?.err) message.error(res.data || 'something was wrong')
-        // else handleUploadDone(res.data)
-        // handleUploadDone({
-        //     numHitsCreated: successProject,
-        //     numHitsIgnored: lines.length - successProject,
-        //     taskId: taskId,
-        // })
-    }
-    // 批量上传图片
-    if (tabValue === 'images') {
-      if (!imageList.length) {
-        message.error('Please choose at least one image')
-        return
-      }
-      let uploadedCnt = 0
-      let fileSize = 0
-      setUploading(true)
-      for (let image of imageList) {
-        let res = await uploadFileDT(image.originFileObj, projectId)
-        if (!res?.err) {
-          uploadedCnt++
-          fileSize += image.size
-          setUploadProcess((uploadedCnt / imageList.length) * 100)
+        if (res.err) setErrorMsg(res.data)
+        else {
+          Modal.success({
+            content: '数据上传成功,正在执行转化任务',
+            onOk: () => {
+              history.push('/userHome/projects/' + projectId.toString())
+            },
+          })
         }
-      }
-      setUploading(false)
-      handleUploadDone({
-        numHitsCreated: uploadedCnt,
-        numHitsIgnored: imageList.length - uploadedCnt,
-        totalUploadSizeInBytes: fileSize,
-      })
-    }
-    // 上传zip文件
-    if (tabValue === 'zip') {
-      if (!zipFile) {
-        message.error('Please choose a zip file')
-        return
-      }
-      setUploading(true)
-      res = await uploadFileDT(zipFile, projectId, event => setUploadProcess(event.percent))
-      setUploading(false)
-      if (res?.err) message.error(res.data || 'something was wrong')
-      else handleUploadDone(res.data)
     }
   }
 
@@ -124,93 +114,59 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         }}
       >
         <TabPane  tab="txt文本文件" key="txt" disabled={uploading}>
-            <p style={{ opacity: '0.7', fontSize: '17px' }}>
-                请上传文本文件, 根据行数生成项目个数, 文本文件的每行为图片所在文件夹的绝对路径 <br />
-            </p>
-            <div style={{ margin: '20px auto', width: '200px', textAlign: 'left' }}>
-            <Dragger
-              beforeUpload={beforeUpload}
-              showUploadList={true}
-              maxCount={1} 
-              accept=".txt"
-            >
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖拽文件到此区域</p>
-            </Dragger>
+          <div style={{ margin: '20px auto', width: '500px', textAlign: 'left' }}>
+              <Form
+                form={form}
+                layout="vertical"
+                style={{ textAlign: 'left' }}
+                initialValues={{ imageType: 'normal' }}
+                onFinish={handleSubmit}
+              >
+                <Form.Item
+                  label="分组名称"
+                  name="group"
+                  rules={[
+                    {
+                      required: true,
+                      message: '必须选择分组',
+                    },
+                  ]}
+                >
+                    <Select
+                      style={{ width: '100%' }}
+                      options={options}
+                    ></Select>
+                </Form.Item>
+                <div style={{ marginBottom: '15px' }}>
+                  <p style={{ opacity: '0.7', fontSize: '14px' }}>
+                    请上传文本文件, 根据行数生成项目个数, 文本文件的每行为图片所在文件夹的绝对路径
+                  </p>
+                  <Dragger
+                    beforeUpload={beforeUpload}
+                    showUploadList={true}
+                    maxCount={1} 
+                    accept=".txt"
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <UploadOutlined />
+                    </p>
+                    <p className="ant-upload-text">点击或拖拽文件到此区域</p>
+                  </Dragger>
+                </div>
+              </Form>
           </div>
         </TabPane>
-        {/* <TabPane tab="图片文件" key="images" disabled={uploading}>
-          <p style={{ opacity: '0.7', fontSize: '17px' }}>
-            选择一张或多张（最多20张）图片 <br />
-          </p>
-          <div style={{ margin: '20px auto', width: '200px', textAlign: 'left' }}>
-            <Dragger
-              beforeUpload={beforeUpload}
-              onChange={onImageChange}
-              multiple
-              maxCount={20}
-              accept="image/*"
-            >
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖拽文件到此区域</p>
-            </Dragger>
-          </div>
-        </TabPane>
-        <TabPane tab="Zip文件" key="zip" disabled={uploading}>
-          <p style={{ opacity: '0.7', fontSize: '17px' }}>一个包含所有图片的压缩文件</p>
-          <p style={{ opacity: '0.7', fontSize: '17px' }}>
-            压缩包类型: .zip,.gzip,.gz,.tar,.mrxs,.nii,.dcm,.svs,.tif
-          </p>
-          <div style={{ margin: '20px auto', width: '200px', textAlign: 'left' }}>
-            <Dragger
-              beforeUpload={beforeUpload}
-              maxCount={1}
-              accept=".zip,.gzip,.gz,.tar,.mrxs,.nii,.dcm,.svs,.tif"
-              showUploadList={false}
-            >
-              <p className="ant-upload-drag-icon">
-                <UploadOutlined />
-              </p>
-              <p className="ant-upload-text">点击或拖拽文件到此区域</p>
-            </Dragger>
-          </div>
-          {zipFile && (
-            <div className={styles.fileList}>
-              <FileZipOutlined style={{ fontSize: '26px' }} />
-              <span style={{ margin: '0 15px' }}>{zipFile.name}</span>
-              {`size: ${bytes(zipFile.size)}`}
-              <DeleteOutlined
-                style={{ marginLeft: 'auto', cursor: 'pointer' }}
-                onClick={() => setZipFile(null)}
-              />
-            </div>
-          )}
-        </TabPane> */}
       </Tabs>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {(uploading || uploadProcess > 0) && (
-          <Progress
-            percent={Number(uploadProcess.toFixed(2))}
-            style={{ width: '400px', margin: 'auto' }}
-          />
-        )}
-        {
-            uploading && (
-                <Spin tip={"文件正在解析到数据库"} style={{margin: '20px auto'}}></Spin>
-            )
-        }
-        <Button
-          style={{ width: '200px', margin: '20px auto' }}
-          type="primary"
-          disabled={uploading}
-          onClick={handleSubmit}
-        >
-          提交
-        </Button>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin tip={"文件正在解析到数据库"} style={{margin: '20px auto'}} spinning={uploading}>
+          <Button type="default" onClick={() => history.push('/userHome/projects/' + projectId.toString())} disabled={uploading}
+              style={{marginRight:'40px'}}>
+            返回
+          </Button>
+          <Button type="primary" onClick={() => form.submit()} disabled={uploading}>
+            提交
+          </Button>
+        </Spin>
       </div>
     </div>
   )

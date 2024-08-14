@@ -9,13 +9,11 @@ const SearchBar = ({ setKeyWord }) => {
 
     function handleSearch () {
         setKeyWord(key.trim())
-        console.log(key.trim())
     }
 
     const allSearch = async (e) => {
         if (e.keyCode === 13){
             setKeyWord(key.trim())
-            console.log(key.trim())
         }
     }
 
@@ -23,7 +21,6 @@ const SearchBar = ({ setKeyWord }) => {
         <div className={styles.SearchBarDiv}>
             <input type="text"
                    value={key}
-                // autoFocus="true"
                    placeholder={t('keyword')}
                    onChange={e => setKey(e.target.value)}
                    onKeyUp={allSearch}

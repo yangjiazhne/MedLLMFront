@@ -14,6 +14,7 @@ import {
   polygonPositionHandler,
 } from './utils'
 import { hexToRgba } from '@/helpers/Utils'
+import { liveQA } from '@/request/actions/task'
 
 // @ts-ignore
 const fabric = window.fabric
@@ -42,7 +43,9 @@ export const fabricObjAddEvent = (
   firstClick, // 记录第一次点击状态
   ControlTypeChangeTODRAG,  //更改控制方式
   ChangeActiveObj, //更新目前选中对象
-  dispatch
+  setIsQuestion,  // 是否在框选LLM区域
+  dispatch,
+  appendChatContent
 ) => {
   canvas.on({
     'selection:created': o => {
@@ -55,7 +58,7 @@ export const fabricObjAddEvent = (
       const bl = o.selected[0].aCoords.bl
       const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
 
-      o.selected[0].set('fill','rgba(0,0,0,0.2)')
+      o.selected[0].set('fill','rgba(0,0,0,0.3)')
 
       setPosition({
         left: _relativeBl.x,
@@ -70,7 +73,7 @@ export const fabricObjAddEvent = (
       const bl = o.selected[0].aCoords.bl
       const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
 
-      o.selected[0].set('fill','rgba(0,0,0,0.2)')
+      o.selected[0].set('fill','rgba(0,0,0,0.3)')
 
       setPosition({
         left: _relativeBl.x,
@@ -220,6 +223,13 @@ export const fabricObjAddEvent = (
             mouseFrom.current = actualPoint
           }
 
+          // 框选问答区域
+          if (currentShape === hitShapeTypes.LLMREGION) {
+            if (o.target) return
+            drawingRect.current = true
+            mouseFrom.current = actualPoint
+          }
+
           // 画多边形路径
           if (currentShape === hitShapeTypes.POLYGONPATH) {
             if(o.target) return
@@ -316,6 +326,18 @@ export const fabricObjAddEvent = (
             )
           }
 
+          if (drawingRect.current && currentShape === hitShapeTypes.LLMREGION) {
+            generateRect(
+              canvas,
+              actualPoint,
+              drawingObject,
+              mouseFrom,
+              currentColor,
+              strokeWidth,
+              false
+            )
+          }
+
           if ( drawingPolygonPath.current && currentShape === hitShapeTypes.POLYGONPATH) {
             addPolygonPoint(
               actualPoint,
@@ -401,7 +423,9 @@ export const fabricObjAddEvent = (
         currentCanvas,
         currentControlType,
         pathoImgInfo,
-        isMutiTag
+        isMutiTag,
+        currentImage,
+        currentQuestion
       } = project
       
       const matrix = fabric.util.invertTransform(canvas.viewportTransform)
@@ -463,7 +487,7 @@ export const fabricObjAddEvent = (
           }
           // 多边形路径绘制完成
           if ( drawingPolygonPath.current && currentShape === hitShapeTypes.POLYGONPATH) {
-            generatePolygon(
+            generatePolygonPath(
               canvas,
               polygonPoints,
               tempLineArr,
@@ -486,19 +510,40 @@ export const fabricObjAddEvent = (
               payload: currentCanvas,
             })
           }
+          //LLM框选区域绘制完成
+          if (currentShape === hitShapeTypes.LLMREGION && drawingRect.current) {
+            getLLMRegion(
+              canvas,
+              actualPoint,
+              drawingObject,
+              mouseFrom,
+              currentColor,
+              strokeWidth,
+              ControlTypeChangeTODRAG,
+              pathoImgInfo,
+              setIsQuestion,
+              currentImage,
+              appendChatContent,
+              currentQuestion,
+              dispatch
+            )
+
+            drawingObject.current = null
+            drawingRect.current = false
+            moveCount.current = 1
+          }
+
           if (currentShape === hitShapeTypes.RECT && drawingRect.current) {
             // 矩形绘制完毕
-            if (currentShape === hitShapeTypes.RECT) {
-              generateRect(
-                canvas,
-                actualPoint,
-                drawingObject,
-                mouseFrom,
-                currentColor,
-                strokeWidth,
-                true
-              )
-            }
+            generateRect(
+              canvas,
+              actualPoint,
+              drawingObject,
+              mouseFrom,
+              currentColor,
+              strokeWidth,
+              true
+            )
 
             drawingObject.current = null
             drawingRect.current = false
@@ -524,6 +569,37 @@ export const fabricObjAddEvent = (
 
     },
   })
+}
+
+//生成最终的多边形路径
+export const generatePolygonPath = (
+  canvas,
+  polygonPoints,
+  tempLineArr,
+  drawingObject,
+  tempActiveLine,
+  fillColor,
+  strokeWidth
+) => {
+  if (!drawingObject.current) return
+  polygonPoints.current.forEach(point => canvas.remove(point))
+  tempLineArr.current.forEach(line => canvas.remove(line))
+  canvas.remove(drawingObject.current).remove(tempActiveLine.current)
+  const points = drawingObject.current.get('points')
+  // .map(_p => ({ x: _p.x + sliceX, y: _p.y + sliceY }))
+
+  const polygon = drawPolygon({
+    points,
+    color: fillColor,
+    strokeWidth,
+  })
+
+  canvas.add(polygon)
+
+  tempActiveLine.current = null
+  drawingObject.current = null
+  polygonPoints.current = []
+
 }
 
 // 生成最终的多边形
@@ -571,6 +647,63 @@ export const generatePolygon = (
   tempActiveLine.current = null
   drawingObject.current = null
   polygonPoints.current = []
+}
+
+// 获取LLM框选区域的坐标
+const getLLMRegion = async (
+  canvas,
+  endPoint,
+  drawingObject,
+  mouseFrom,
+  fillColor,
+  strokeWidth,
+  ControlTypeChangeTODRAG,
+  pathoImgInfo,
+  setIsQuestion,
+  currentImage,
+  appendChatContent,
+  currentQuestion,
+  dispatch
+) => {
+  if (drawingObject.current) {
+    // 清除上一次绘制的矩形
+    canvas.remove(drawingObject.current)
+  }
+
+  const scale = pathoImgInfo.size.width / 1000
+  
+  const x1 = mouseFrom.current.x
+  const y1 = mouseFrom.current.y
+
+  const x2 = endPoint.x
+  const y2 = endPoint.y
+
+  const left = Math.min(x1, x2) * scale;
+  const top = Math.min(y1, y2) * scale;
+
+  const width = Math.abs(x2 - x1) * scale;
+  const height = Math.abs(y2 - y1) * scale;
+  console.log(currentQuestion)
+
+  ControlTypeChangeTODRAG()
+  setIsQuestion(false)
+  dispatch({
+    type: 'UPDATE_CURRENT_SHAPE',
+    payload: hitShapeTypes.NONE,
+  })
+
+  const res = await liveQA({
+    "llmTaskTypeId": 1,
+    "imageId": currentImage.imageId,
+    "question": currentQuestion,
+    "x": left,
+    "y": top,
+    "width": width,
+    "height": height
+  })
+
+  appendChatContent(res.data, "assistant")
+
 }
 
 // 绘制矩形时要根据鼠标移动位置改变矩形大小【生成临时矩形】

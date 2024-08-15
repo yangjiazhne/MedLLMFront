@@ -89,7 +89,7 @@ export const searchImage = (imageGroupId, imageTypeId, imageId, imageName, image
         if (err)
           resolve({
             err: true,
-            data: err.response.body.msg,
+            data: err,
           })
         else
           resolve({

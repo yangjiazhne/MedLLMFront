@@ -60,9 +60,18 @@ const user = function (state = userInitialState, action) {
       }
     }
     case UPDATE_CURRENT_USER_GROUPS: {
+      const groups = action.payload.content
+      const imageStatus = action.payload.imageStatus
+
+      groups.forEach((item, index) => {
+        const totalImages = imageStatus[index].reduce((sum, value) => sum + value, 0);
+        item.totalImages = totalImages;
+        item.finishImages = imageStatus[index][3]
+      });
+
       return {
         ...state,
-        currentUserGroups: action.payload
+        currentUserGroups: groups
       }
     }
     case UPDATE_CURRENT_USER_GROUPS_LENGTH: {

@@ -9,6 +9,7 @@ import { useParams } from 'react-router-dom'
 const { TabPane } = Tabs
 const { Dragger } = Upload
 import { searchGroup} from '@/request/actions/group'
+import { logOut } from '@/helpers/Utils'
 
 const UploadMrxsFile = ({ handleUploadDone }) => {
   const [form] = Form.useForm()
@@ -22,10 +23,18 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
   //@ts-ignore
   let {projectId} = useParams()
 
-
   // 获取项目所有的组
   const fetchGroup = async() => {
     const projectGroupsRes= await searchGroup(projectId)
+
+    if(projectGroupsRes.err){
+      Modal.error({
+        title: '提示',
+        content: '您的登录已过期，请重新登陆',
+        onOk: () => logOut(history),
+      })
+    }
+  
     const groups = projectGroupsRes.data.content 
 
     const value = groups.map(group => ({

@@ -3,13 +3,13 @@ import qs from 'qs'
 import { BASE_URL, imgUploadPre, PYTHON_SERVER_HTTP } from '@/constants'
 import { getToken } from '@/helpers/dthelper'
 
-//查询数据集
-export const searchSession = (sessionId, imageId) => {
+//查询会话
+export const searchSession = (imageId, sessionId) => {
     const token = getToken()
   
     return new Promise((resolve, reject) => {
       superagent
-        .post(BASE_URL + '/session/search')
+        .get(BASE_URL + '/session/search')
         .query({sessionId, imageId})
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
@@ -21,7 +21,7 @@ export const searchSession = (sessionId, imageId) => {
           else
             resolve({
               err: false,
-              data: res.body,
+              data: res.body.data,
             })
         })
     })

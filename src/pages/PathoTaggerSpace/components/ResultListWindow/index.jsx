@@ -7,6 +7,7 @@ import VButton from "../../../../components/VButton";
 import React, {useEffect, useRef, useState} from "react";
 import {Button} from "antd";
 import { VIcon } from '@/components'
+import { useSelector } from 'react-redux'
 import {
   DoubleLeftOutlined,
   DragOutlined,
@@ -22,22 +23,40 @@ const ResultListWindow = ({
                             onBtnClick,
                             yPosition
                           }) => {
+  const {
+    currentLLMTaskType
+  } = useSelector(
+    // @ts-ignore
+    state => state.project
+  )
   const [minimizeStatus, setMinimizeStatus] = useState(false)
   const [lastDragMouseStatus, setLastDragMouseStatus] = useState({x: null, y: null})
+  const [taskButton, setTaskButton] = useState([])
   const presetTypeStyle = {
     primary: {
-      borderColor: 'white',
-      background: '#9fc559'
+      borderColor: '#ffaee0',
+      background: 'transparent',
+      color: '#ffaee0',
+      padding: '6px'
     },
     warning: {
-      borderColor: 'white',
-      background: '#edbb3a'
+      borderColor: '#79fbf3',
+      background: 'transparent',
+      color: '#79fbf3',
     },
     base: {
-      borderColor: 'white',
-      background: 'transparent'
+      borderColor: '#e5c9ff',
+      background: 'transparent',
+      color: '#e5c9ff',
+      padding: '4px'
     }
   }
+
+  useEffect(() => {
+    if(currentLLMTaskType.length>0){
+      setTaskButton(currentLLMTaskType.slice(1) ?? [])
+    }
+  }, [currentLLMTaskType]);
 
   const beforeMinimizeStatus = (event, targetStatus) => {
     if(!event) {
@@ -109,14 +128,16 @@ const ResultListWindow = ({
                 <p>预推理结果</p>
                 <div className={styles.btnGroup}>
                   {
-                    (btnList ?? []).map((item, index) => (
+                    taskButton.map((item, index) => (
                       <VButton
                         className={`${styles.viewerPredictResultToReportBtn} ${styles.viewerPredictDetailBtn}`}
-                        style={getBtnStyle(item)}
+                        style={getBtnStyle({
+                          type: 'base',
+                        })}
                         onClick={(e) => beforeBtnClick(item)}
                         key={index}
                       >
-                        {item['text']}
+                        {item.llmTaskTypeName}
                       </VButton>
                     ))
                   }
@@ -129,7 +150,7 @@ const ResultListWindow = ({
           </div>
       )}
       
-      <div className={styles.miniMize}>
+      <div className={styles.minimize}>
           <div onClick={(e) => beforeMinimizeStatus(null, !minimizeStatus)}
                title="预推理结果"
                style={{backgroundColor: `${minimizeStatus ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}

@@ -34,6 +34,7 @@ export const hitShapeTypes = {
     POLYGON: 'polygon',
     POLYGONPATH: 'polygonPath',
     PATH: 'path',
+    LLMREGION: 'LLMRegion',
     NONE:'none' //拖拽状态
 }
 

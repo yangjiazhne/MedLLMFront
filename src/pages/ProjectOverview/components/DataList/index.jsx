@@ -15,12 +15,12 @@ const CheckboxGroup = Checkbox.Group;
 const { confirm } = Modal;
 
 // 单张图像
-const HitImage = ({ hitDetail }) => {
+const HitImage = ({ hitDetail, projectId }) => {
     return (
         <div className={styles.imgContainer}>
         <div className={styles.imgWrap}>
             <Image
-              src={hitDetail.imageUrl}
+              src={`/uploads/${projectId}/${hitDetail.imageId}/deepzoom/imgs/10/0_0.jpeg`}
               fallback={imgError}
               style={{ height: '130px', width: '130px'}}
             />
@@ -168,7 +168,7 @@ const GroupDeleteForm = ({open, onDelete, onCancel, currentProjectGroups}) => {
 }
 
 // 移动图像Modal
-const ImgMoveForm = ({open, onOk, onCancel, dispatch}) => {
+const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
     const {
       currentGroupImages, // 项目图片信息
       currentProjectGroups,
@@ -253,7 +253,7 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch}) => {
                                     <Checkbox value={hit.imageId} style={{alignItems: 'center'}}>
                                         <div style={{display:'flex', alignItems: 'center'}}>
                                             <Image
-                                                src={hit.imageUrl}
+                                                src={`/uploads/${projectId}/${hit.imageId}/deepzoom/imgs/10/0_0.jpeg`}
                                                 fallback={imgError}
                                                 preview={{ mask: null }}
                                                 style={{ height: '40px', width: '40px', marginLeft: '8px', marginRight: '8px'}}
@@ -498,6 +498,7 @@ const DataList = ({setUploadImg}) => {
                                   }}
                                 onCancel={()=>{setIsMoveImgModalOpen(false)}}
                                 dispatch={dispatch}
+                                projectId={projectId}
                             />
                         </div>
                         <Divider style={{ marginTop: '5px', marginBottom: '10px'}} />
@@ -506,7 +507,7 @@ const DataList = ({setUploadImg}) => {
                             {currentGroupImages.length !==0 ? (
                               <Space wrap>
                                 {currentGroupImages.map(hit => (
-                                    <HitImage hitDetail={hit} key={hit.imageId} />
+                                    <HitImage hitDetail={hit} projectId={projectId} key={hit.imageId} />
                                 ))}
                              </Space>
                             ):(

@@ -5,6 +5,8 @@ import styles from './index.module.scss'
 import Login from './Login'
 import SignUp from './SignUp'
 import { useDispatch, useSelector } from 'react-redux'
+import LoginBG from '@/assets/login_bg.jpg'
+import './index.scss'
 
 const LoginAndSignUp = () => {
   const [panelType, setPanelType] = useState('login')
@@ -32,17 +34,19 @@ const LoginAndSignUp = () => {
     <>
       <Navbar />
       <div className={styles.loginWrap}>
-        <div className={styles.leftText}>
-          <span>极致简易的数据标注</span>
-          <span>邀请您的团队，在短短几分钟内就可生成高质量的标注数据</span>
-          <span>注册即代表您统一我们的隐私政策协议</span>
-        </div>
-        <div className={styles.rightPanel}>
+        <div className={styles.loginBg} style={{background: `transparent url(${LoginBG}) center center no-repeat`}}></div>
+        
           {panelType === 'login' && (
-            <Login goToSignUp={() => setPanelType('signUp')} handleSave={handleSave} />
+            <div className={styles.loginModuleWrap}> 
+              <Login goToSignUp={() => setPanelType('signUp')} handleSave={handleSave} />
+            </div>
           )}
-          {panelType === 'signUp' && <SignUp goToLogin={() => setPanelType('login')} />}
-        </div>
+          {panelType === 'signUp' && (
+            <div className={styles.loginModuleWrap}>
+              <SignUp goToLogin={() => setPanelType('login')} />
+            </div>
+          )}
+
       </div>
       <FixedFooter />
     </>

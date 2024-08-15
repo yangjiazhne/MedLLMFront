@@ -23,6 +23,8 @@ import {
   UPDATE_CURRENT_GROUP_IMAGES,
   UPDATE_CURRENT_IMAGE,
   UPDATE_CURRENT_GROUP_LENGTH,
+  UPDATE_CURRENT_QUESTION,
+  UPDATE_DEFAULT_GROUP_INFO,
   UPDATE_CURRENT_LLM_TASK_TYPE,
   UPDATE_ISMUTITAG,
   UPDATE_PROJECT_PATHOIMGINFO,
@@ -50,6 +52,7 @@ export const projectInitialState = {
   currentGroupImages: null, //当前组中的图像
   currentImage: null, //当前选中的图像
   currentLLMTaskType: null,  //当前的任务类型
+  currentQuestion: null, //当前的提问
   boundingBoxMap: [], // 当前标记项的标记信息（有可能属于全图，有可能属于切片）
   allBoundingBoxMap: [], // 当前标记图片的全图信息
   currentImgSize: {
@@ -70,6 +73,7 @@ export const projectInitialState = {
     width: 0,
     height: 0,
   },
+  defaultGroupInfo: null,
   strokeWidth: 1, // 画笔宽度
   circleRadius: 2, // 圆形半径
   isEdit: false,
@@ -100,6 +104,16 @@ const project = function (state = projectInitialState, action) {
       return {
         ...state,
         projectHits: action.payload,
+      }
+    case UPDATE_CURRENT_QUESTION:
+      return {
+        ...state,
+        currentQuestion: action.payload
+      }
+    case UPDATE_DEFAULT_GROUP_INFO:
+      return {
+        ...state,
+        defaultGroupInfo: action.payload
       }
     case UPDATE_CURRENT_COLOR:
       return {

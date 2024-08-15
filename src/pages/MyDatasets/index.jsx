@@ -49,7 +49,7 @@ const MyProjects = () => {
     if(keyword !== '') projectName = keyword
 
     const res = await searchProject(null,projectName,page,size)
-    
+    console.log(res)
     setLoading(false)
     if (!res.err) {
       dispatch({

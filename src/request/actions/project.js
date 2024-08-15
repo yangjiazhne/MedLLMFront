@@ -1,9 +1,3 @@
-/*
- * @Author: Azhou
- * @Date: 2021-05-20 20:35:24
- * @LastEditors: Azhou
- * @LastEditTime: 2022-11-22 16:38:07
- */
 import superagent from 'superagent'
 import qs from 'qs'
 import { BASE_URL, imgUploadPre, PYTHON_SERVER_HTTP } from '@/constants'
@@ -93,7 +87,7 @@ export const searchProject = (projectId, projectName,page,size) => {
         if (err)
           resolve({
             err: true,
-            data: err.response.body.msg,
+            data: err,
           })
         else
           resolve({

@@ -17,8 +17,20 @@ import { VIcon } from '@/components'
 // @ts-ignore
 const fabric = window.fabric
 const { TextArea } = Input;
+const zoomLevels = [
+  { value: 40, className: styles.choose6 },
+  { value: 20, className: styles.choose5 },
+  { value: 10, className: styles.choose4 },
+  { value: 4,  className: styles.choose3 },
+  { value: 2,  className: styles.choose2 },
+  { value: 1,  className: styles.choose1 },
+];
+
 const CanvasAnnotator = ({
-  setChangeSession
+  setChangeSession,
+  isQuestion,
+  setIsQuestion,
+  appendChatContent
 }) => {
   // 初始化openSeadragon图片查看器
   // 初始化 openSeadragon
@@ -231,7 +243,9 @@ const CanvasAnnotator = ({
       firstClick,
       ControlTypeChangeTODRAG,
       ChangeActiveObj,
-      dispatch
+      setIsQuestion,
+      dispatch,
+      appendChatContent
     )
   }, [pathoImgInfo])
 
@@ -321,7 +335,7 @@ const CanvasAnnotator = ({
     if (!canvasInstance.current) return
     const canvas = canvasInstance.current
     // 当前还有未完成的自由路径和多边形
-    if (drawingPolygon) {
+    if (drawingPolygon.current) {
       generatePolygon(
         canvas,
         polygonPoints,
@@ -415,15 +429,28 @@ const CanvasAnnotator = ({
       {viewer && <div className={styles.zoomBtn}>
         <div className={styles.rbLabel}>{`${viewer.viewport.getZoom(true).toFixed(1)}x`}</div>
         <div onClick={() => {
+          if(isQuestion){
+            message.warning('提问尚未结束，请框选一个区域！');
+            return
+          }
           viewer.viewport.goHome()
           viewer.viewport.applyConstraints()
           }}  className={`${styles.rbChoice} ${styles.choose7}`}>1:1</div>
-        <div onClick={()=>{setZoom(40)}} className={`${styles.rbChoice} ${styles.choose6}`}>40</div>
-        <div onClick={()=>{setZoom(20)}} className={`${styles.rbChoice} ${styles.choose5}`}>20</div>
-        <div onClick={()=>{setZoom(10)}} className={`${styles.rbChoice} ${styles.choose4}`}>10</div>
-        <div onClick={()=>{setZoom(4)}} className={`${styles.rbChoice} ${styles.choose3}`}>4</div>
-        <div onClick={()=>{setZoom(2)}} className={`${styles.rbChoice} ${styles.choose2}`}>2</div>
-        <div onClick={()=>{setZoom(1)}} className={`${styles.rbChoice} ${styles.choose1}`}>1</div>
+          {zoomLevels.map(level => (
+            <div 
+              key={level.value}
+              onClick={() => {
+                if (isQuestion) {
+                  message.warning('提问尚未结束，请框选一个区域！');
+                  return;
+                }
+                setZoom(level.value);
+              }}
+              className={`${styles.rbChoice} ${level.className}`}
+            >
+              {level.value}
+            </div>
+          ))}
       </div>}
       <Modal title="标注信息" 
               visible={isTagInfoModalOpen} 

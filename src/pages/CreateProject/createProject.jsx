@@ -9,6 +9,7 @@ import {
 } from '@/request/actions/project'
 import { useSelector, useDispatch } from 'react-redux'
 import { useHistory } from 'react-router'
+import { logOut } from '@/helpers/Utils'
 
 // 图片类型选择框
 const options = [
@@ -50,6 +51,13 @@ const CreateProjectView = () => {
     const { project_name, instructions } = values
 
     const projectRes = await searchProject()
+    if(projectRes.err){
+      Modal.error({
+        title: '提示',
+        content: '您的登录已过期，请重新登陆',
+        onOk: () => logOut(history),
+      })
+    }
 
     const allProjects = projectRes.data.content
 

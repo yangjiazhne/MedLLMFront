@@ -2,15 +2,17 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CloseOutlined } from '@ant-design/icons'
 import styles from './index.module.scss'
+import { useHistory, useParams } from 'react-router-dom'
 import {Divider, Collapse, Button, Spin, Image, Input, InputNumber,Empty } from 'antd'
 import Draggable from 'react-draggable'; 
+import { searchSession } from '@/request/actions/session'
 const { Panel } = Collapse;
 import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
 import { imgError } from './config'
 const { Search } = Input;
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 
-const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize}) => {
+const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize, setHistoryChat}) => {
     const {
         currentGroupImages, // 项目图片信息
         currentProjectGroups,
@@ -22,6 +24,8 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
         state => state.project
       )
     const dispatch = useDispatch()
+    // @ts-ignore
+    let { projectId } = useParams()
 
     const [loading, setLoading] = useState(false)
     const [bounds, setBounds] = useState({
@@ -67,17 +71,53 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
     }
 
     const changeImage = async (image) => {
+        const sessionListRes = await searchSession(image.imageId)
+
+        image.status = sessionListRes.data[0].status
+        // const sessionListRes = await searchSession(26)
+
+        if(sessionListRes.data.length > 0){
+            const sessionList = sessionListRes.data[0].qaPairHistoryList.map(item => [
+            {
+                role: "user",
+                msg: item.question
+            },
+            {
+                role: "assistant",
+                msg: item.answer
+            }
+            ]).reduce((acc, curr) => acc.concat(curr), []);
+
+            setHistoryChat(sessionList)
+        }
+
       dispatch({
         type: 'UPDATE_CURRENT_IMAGE',
         payload: image,
       })
 
       //获取病理图信息
-      const pathoImageInfo = await fetchImageTileInfo(24,24)
-      dispatch({
-        type: 'UPDATE_PROJECT_PATHOIMGINFO',
-        payload: pathoImageInfo,
-      })
+      try{
+        const pathoImageInfo = await fetchImageTileInfo(projectId,image.imageId)
+        dispatch({
+            type: 'UPDATE_PROJECT_PATHOIMGINFO',
+            payload: pathoImageInfo,
+        })
+      }catch (error) {
+        dispatch({
+            type: 'UPDATE_PROJECT_PATHOIMGINFO',
+            payload: {
+                url: '',
+                overlap: '',
+                tileSize: '',
+                format: '',
+                size: {
+                width: 0,
+                height: 0,
+                },
+            }
+        })
+      }
     }
 
     const onSearch = (value) => {
@@ -112,6 +152,7 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                         <Divider style={{ marginTop: '5px', marginBottom: '5px', backgroundColor: '#354052' }} />
                         <div className={styles.sliceListBody}>
                             <Collapse accordion
+                                      defaultActiveKey={[currentGroup.imageGroupId]}
                                       onChange={onChangeGroup} 
                                       style={{border:'1px solid #272b33', backgroundColor:'transparent'}} 
                                       className={styles.customCollapse}>
@@ -122,12 +163,13 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                                         {currentGroupImages.length > 0 ? 
                                          ((currentGroupImages.map(image => (
                                             <div className={styles.sliceItem}
-                                                 style={{backgroundColor: `${currentImage.imageId === image.imageId  ? 'rgba(65, 78, 95, .5)' : 'rgba(65, 78, 95, .8)'}`,
-                                                         color: `${currentImage.imageId === image.imageId  ? '#fff' : '#25b0e5'}`}}
+                                                 style={{backgroundColor: `${currentImage?.imageId === image.imageId  ? 'rgba(65, 78, 95, .5)' : 'rgba(65, 78, 95, .8)'}`,
+                                                         color: `${currentImage?.imageId === image.imageId  ? '#fff' : '#25b0e5'}`}}
                                                  onClick={()=>{changeImage(image)}}>
                                                 <Image
-                                                    src={image.imageUrl}
+                                                    src={`/uploads/${projectId}/${image.imageId}/deepzoom/imgs/10/0_0.jpeg`}
                                                     fallback={imgError}
+                                                    preview={false}
                                                     style={{ height: '64px', width: '64px'}}
                                                 />
                                                 <div style={{ width: '130px',wordWrap: 'break-word', marginLeft:'5px' }}>{image.imageName}</div>

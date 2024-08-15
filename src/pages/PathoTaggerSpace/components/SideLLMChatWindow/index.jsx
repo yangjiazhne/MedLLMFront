@@ -6,27 +6,34 @@ import React, { createRef, useEffect, useState } from 'react'
 import styles from './index.module.scss'
 import { VButton } from '@/components'
 import { 
+  BlockOutlined,
   BorderBottomOutlined, 
   BorderLeftOutlined, 
   BorderRightOutlined, 
+  MinusOutlined,
   CloseOutlined, 
-  SendOutlined 
+  SendOutlined,
+  ReloadOutlined,
+  CaretDownOutlined,
 } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 // @ts-ignore
 import LLMIcon from '@/assets/icon.jpg'
 import Draggable from 'react-draggable'
-
-
+import { use } from 'i18next'
 
 const SideLLMChatWindow = ({
   chatHistory,
   onMessageSend,
   onMessageClick,
+  historyChat,
+  appendChatHistory
 }) => {
   const [floatWindowSide, setFloatWindowSideInner] = useState('right')
   const [chatWindowExtraStyle, setChatWindowExtraStyle] = useState({})  // 额外的样式信息，用于存储resize后的宽高
   const [forceVerticalLayout, setForceVerticalLayout] = useState(false)  // 对话窗口横置后，是否保持竖向布局
+  const [chatListUserScroll, setChatListUserScroll] = useState(false)
+  const [newMessageReminderShow, setNewMessageReminderShow] = useState(false)
   const [chatWindowPosition, setChatWindowPosition] = useState({x: 0, y: 0})
   const [chatWindowHide, setChatWindowHide] = useState(false)
   const [chatWindowHidedPosition, setChatWindowHidedPosition] = useState({x: 5, y: 100})
@@ -35,6 +42,9 @@ const SideLLMChatWindow = ({
   const chatWindowObject = createRef()
   const chatWindowContainerObject = createRef()
   const chatInputObject = createRef()
+  const chatListObject = createRef()
+
+  const [isClickGetHistory, setIsClickGetHistory] = useState(false)
 
   const chatWindowSize = {
     // 聊天框宽高
@@ -215,6 +225,45 @@ const SideLLMChatWindow = ({
     // 鼠标坐标限制可以不初始化，此处省略
   }
 
+  const onMessageReceived = function() {  // 自动聊天记录滚动
+    let t = chatListObject.current
+    if(chatListUserScroll) {
+      setNewMessageReminderShow(true)
+      return  // 避免影响用户滚动
+    }
+    if(!t) { return }
+    let { clientHeight, scrollHeight } = t
+    if(scrollHeight > clientHeight) {
+      t.scrollBy({top: scrollHeight - clientHeight, behavior: 'smooth'})
+    }
+  }
+  const onChatListScroll = function (event) {  // 用户触发滚动
+    let t = event.target
+    if(!t) {
+      return
+    }
+    let { clientHeight, scrollHeight, scrollTop } = t
+    if(scrollHeight <= clientHeight) {
+      return
+    }
+    let maxScrollHeight = scrollHeight - clientHeight
+    if (maxScrollHeight - scrollTop >= 240) {
+      setChatListUserScroll(true)
+    } else {
+      setChatListUserScroll(false)
+      setNewMessageReminderShow(false)
+    }
+  }
+  const onNewMessageClick = function () {
+    let t = chatListObject.current
+    if(!t) { return }
+    let { clientHeight, scrollHeight, scrollTop } = t
+    if(scrollHeight > clientHeight) {
+      t.scrollBy({top: scrollHeight - clientHeight, behavior: 'smooth'})
+    }
+    setNewMessageReminderShow(false)
+  }
+
   const handleOnHidedIconDragStart = function(event) {
     let {layerX: x, layerY: y, offsetX: xd, offsetY: yd} = event.nativeEvent
     x -= xd + 5; y -= yd + 5
@@ -232,8 +281,13 @@ const SideLLMChatWindow = ({
     }
   }
 
-  const beforeMessageSend = function () {
-    let chatContent = chatInputObject.current.state.value ?? ""
+  const beforeMessageSend = function (event) {
+    let chatContent = ""
+    if(!event) {
+      chatContent = chatInputObject.current.input.defaultValue
+    } else {
+      chatContent = event.nativeEvent.target.value ?? ""
+    }
     if (chatContent === "") {
       return;
     }
@@ -241,12 +295,13 @@ const SideLLMChatWindow = ({
   }
   const handleMessageInput = function(event) {
     let chatMessage = event.nativeEvent.target.value
+    console.log(chatMessage)
     setEnableSendBtn(chatMessage !== "")
   }
   const handleChatInputKeyDown = function(event) {
     let {keyCode} = event
     if(keyCode == 13) {  // ENTER
-      beforeMessageSend()
+      beforeMessageSend(event)
     }
   }
 
@@ -264,7 +319,9 @@ const SideLLMChatWindow = ({
   useEffect(() => {
     document.addEventListener('keydown', handleHotkeysPress)
   }, [])
-
+  useEffect(() => {
+    onMessageReceived()
+  }, [chatHistory]);
 
   return (
     <div 
@@ -292,15 +349,17 @@ const SideLLMChatWindow = ({
                   {floatWindowSide !== 'bottom' && (<Button onClick={() => setFloatWindowSide('bottom')} type='text'><BorderBottomOutlined /></Button>)}
                   {floatWindowSide !== 'right' && (<Button onClick={() => setFloatWindowSide('right')} type='text'><BorderRightOutlined /></Button>)}
                   </div>
-                  <div style={{flex: '1', textAlign: 'center'}}>
+                  <div style={{flex: '1', textAlign: 'left', padding: '0 10px'}}>
                     OmniPT
                   </div>
                 </div>
-                <div style={{width: '40px'}}>
-                  <Button type='text' style={{padding: '4px 8px'}} block onClick={() => setChatWindowHide(true)}><CloseOutlined /></Button>
+                <div style={{width: '80px', display: 'flex'}}>
+                  {floatWindowSide !== 'bottom' && (<Button onClick={() => setFloatWindowSide('bottom')} type='text' style={{color: 'white'}}><BlockOutlined /></Button>)}
+                  {floatWindowSide !== 'right' && (<Button onClick={() => setFloatWindowSide('right')} type='text' style={{color: 'white'}}><MinusOutlined /></Button>)}
+                  <Button type='text' style={{padding: '4px 8px', color: 'white'}} block onClick={() => setChatWindowHide(true)}><CloseOutlined /></Button>
                 </div>
               </div>
-              <div className={styles.chatContainer}>
+              <div className={styles.chatContainer} ref={chatListObject} onScroll={onChatListScroll}>
                 {chatHistory.length === 0 && (
                   <div className={`${styles.infoContainer} ` + 
                     `${floatWindowSide === 'bottom' && !forceVerticalLayout ? styles.horizen : ''}`}>
@@ -330,6 +389,15 @@ const SideLLMChatWindow = ({
                     </div>  {/* END OF CARDS GRID */}
                   </div>  // END OF INFO CONTAINER
                 )}
+                {historyChat.length > 0 && !isClickGetHistory && (
+                  <div style={{width:'100%', display:'flex', justifyContent:'center'}} 
+                       onClick={()=>{
+                        appendChatHistory()
+                        setIsClickGetHistory(true)
+                       }}>
+                    <Button type="link"><ReloadOutlined style={{color: '#1890ff'}}/>获取历史信息</Button>
+                  </div>
+                )}
                 <div className={styles.chatList}>
                   {chatHistory.map((item, index) => (
                     (item.role === 'user' || item.role === 'assistant') && (
@@ -347,10 +415,29 @@ const SideLLMChatWindow = ({
                     )
                   ))}
                 </div>
+                <div
+                  className={styles.chatContainerNewMessageReminder}
+                  style={{display: newMessageReminderShow ? 'block' : 'none'}}
+                  onClick={onNewMessageClick}
+                >
+                  <CaretDownOutlined /> 收到了新消息
+                </div>
               </div>
               <div className={styles.inputContainer}>
-                <Input placeholder='Type to chat...' type='text' ref={chatInputObject} onChange={handleMessageInput} onKeyDown={handleChatInputKeyDown}/>
-                <Button onClick={beforeMessageSend} disabled={!enableSendBtn}>
+                <Input.TextArea
+                  placeholder='Type to chat...'
+                  type='text'
+                  ref={chatInputObject}
+                  onChange={handleMessageInput}
+                  onKeyDown={handleChatInputKeyDown}
+                  style={{color: 'white', backgroundColor: '#345', borderColor: '#567'}}
+                  rows={1}
+                />
+                <Button
+                  onClick={() => beforeMessageSend()}
+                  disabled={!enableSendBtn}
+                  style={{padding: '5px', width: '35px', color: enableSendBtn ? 'white' : '#888', backgroundColor: '#345', borderColor: '#567'}}
+                >
                   <SendOutlined />
                 </Button>
               </div>

@@ -67,6 +67,26 @@
   color: #cddeed;
 }
 
+.convertProgress{
+  left: 200px;
+  position: absolute;
+  top: 10px;
+  z-index: 9000;
+  border-radius: 24px;
+  padding: 10px 20px 10px 20px;
+  background-color: rgba(40,49,66,.6);
+  color: #cddeed;
+}
+
+.progressCustom{
+  :global{
+    .ant-progress-text{
+      color: #63cfdc !important;
+      font-weight: bold !important;
+    }
+  }
+}
+
 .biaozhu{
   left: 15px;
   position: absolute;

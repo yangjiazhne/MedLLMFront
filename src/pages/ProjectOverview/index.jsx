@@ -16,10 +16,7 @@ import { VButton } from '@/components'
 import { DeleteOutlined,FormOutlined,ExclamationCircleOutlined,UnorderedListOutlined } from '@ant-design/icons'
 import { searchGroup } from '@/request/actions/group'
 import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
-import { getToken } from '@/helpers/dthelper'
-import request from 'superagent';
-import { Stomp, Client } from '@stomp/stompjs';
-import SockJS from "sockjs-client";
+import { logOut } from '@/helpers/Utils'
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 const ProjectOverview = () => {
   const dispatch = useDispatch()
@@ -65,6 +62,15 @@ const ProjectOverview = () => {
 
     // 获取项目详情
     const projectRes = await searchProject(projectId = currentProjectPid)
+
+    if(projectRes.err){
+      Modal.error({
+        title: '提示',
+        content: '您的登录已过期，请重新登陆',
+        onOk: () => logOut(history),
+      })
+    }
+
     dispatch({
       type: 'UPDATE_PROJECT_DETAIL',
       payload: projectRes.data.content[0],
@@ -96,76 +102,6 @@ const ProjectOverview = () => {
   useEffect(() => {
     fetchData()
   }, [projectId])
-
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const userToken = getToken()
-
-    const stompClient = Stomp.over(function () {
-      return new WebSocket((`ws://10.214.211.209:8082/task-progress?token=${encodeURIComponent(userToken)}`))
-    })
-
-    // stompClient.debug = () => {}; // 让控制台不输入某些多余的调试信息
-
-    let subscription;
-    
-    const taskId = 'medllm_dev_pathology_image_convert_27'
-
-    stompClient.connect(null, frame => {
-      subscription = stompClient.subscribe(`/topic/task_progress/${taskId}`, message => {
-        console.log('message:', message);
-      });
-    });
-
-    // 清理函数
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-      if (stompClient) {
-        stompClient.disconnect();
-      }
-    }
-  }, [])
-
-  // useEffect(() => {
-  //   const token = getToken()
-  //   const client = new Client({
-  //     brokerURL: `ws://10.214.211.209:8082/task-progress?token=${encodeURIComponent(token)}`,
-  //     debug: function(str) {
-  //       console.log(str);
-  //     },
-  //     reconnectDelay: 5000,
-  //     heartbeatIncoming: 4000,
-  //     heartbeatOutgoing: 4000,
-  //   });
-    
-  //   client.onConnect = function(frame) {
-  //     console.log('Connected: ' + frame);
-  //     const taskId = 'medllm_dev_pathology_image_convert_27'
-  //     // 订阅目的地并接收消息
-  //     client.subscribe(`/topic/task_progress/${taskId}`, function(message) {
-  //       console.log('Received: ' + message.body);
-  //     });
-  //   };
-
-  //   client.onStompError = function(frame) {
-  //     console.error('Broker reported error: ' + frame.headers['message']);
-  //     console.error('Additional details: ' + frame.body);
-  //   };
-    
-  //   client.activate();
-  // },[])
-
-  const fetchXml = async () => {
-    const res = await fetchImageTileInfo(3,13)
-    console.log(res)
-  }
-
-  useEffect(() => {
-    fetchXml()
-  }, []);
 
   return (
     <Spin spinning={loading}>

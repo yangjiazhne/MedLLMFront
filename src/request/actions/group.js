@@ -88,7 +88,7 @@ export const searchGroup = (projectId, groupId, groupName, groupDescription, pag
         if (err)
           resolve({
             err: true,
-            data: err.response.body.msg,
+            data: err,
           })
         else
           resolve({

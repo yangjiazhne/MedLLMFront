@@ -43,7 +43,7 @@ const SingleProject = ({ projectDetails, deleteProject }) => {
         <Button type="primary">
           <Link
             to={{
-              pathname: '/userHome/projects/' + projectDetails.projectId,
+              pathname: '/userHome/groups/' + projectDetails.projectId,
             }}
           >
             {'查看'}

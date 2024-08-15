@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import styles from './index.module.scss'
-import { Button, Empty, message, Modal, Spin, Form, Divider } from 'antd'
+import { Button, Empty, message, Modal, Spin, Form, Divider, Input } from 'antd'
 import { ExclamationCircleOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
 import { VButton } from '@/components'
 import { useHistory, useParams } from 'react-router-dom'
@@ -17,7 +17,7 @@ import type { PaginationProps } from 'antd'
 import { ConfigProvider, Pagination } from 'antd'
 import zhCN from 'antd/lib/locale/zh_CN'
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
-
+const { TextArea } = Input;
 
 // 新建分组Modal Form
 const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false, editGroup}) => {
@@ -114,7 +114,7 @@ const MyGroupDatasets = () => {
     if (!res.err) {
       dispatch({
         type: 'UPDATE_CURRENT_USER_GROUPS',
-        payload: res.data.content,
+        payload: res.data,
       })
       dispatch({
         type: 'UPDATE_CURRENT_USER_GROUPS_LENGTH',
@@ -235,7 +235,7 @@ const MyGroupDatasets = () => {
           ref={containerRef}
         >
           {currentUserGroups.map((group, index) => (
-            <SingleGroup key={index} deleteGroup={deleteGroupModal} groupDetail={group} />
+            <SingleGroup key={index} deleteGroup={deleteGroupModal} groupDetail={group} projectId={projectId}/>
           ))}
           <ConfigProvider locale={zhCN}>
             <Pagination

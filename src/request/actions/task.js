@@ -9,7 +9,7 @@ export const searchLLMTaskType = (llmTaskTypeId, isPreProcessTask, llmTaskTypeNa
   
     return new Promise((resolve, reject) => {
       superagent
-        .post(BASE_URL + '/task/searchLLMTaskType')
+        .get(BASE_URL + '/task/searchLLMTaskType')
         .query({llmTaskTypeId, isPreProcessTask, llmTaskTypeName, description})
         .set('Authorization', `Bearer ${token}`)
         .end((err, res) => {
@@ -21,7 +21,31 @@ export const searchLLMTaskType = (llmTaskTypeId, isPreProcessTask, llmTaskTypeNa
           else
             resolve({
               err: false,
-              data: res.body,
+              data: res.body.data,
+            })
+        })
+    })
+  }
+
+// 大模型问答
+export const liveQA = (data) => {
+    const token = getToken()
+  
+    return new Promise((resolve, reject) => {
+      superagent
+        .post(BASE_URL + '/task/liveQA')
+        .send(data)
+        .set('Authorization', `Bearer ${token}`)
+        .end((err, res) => {
+          if (err)
+            resolve({
+              err: true,
+              data: err.response.body.msg,
+            })
+          else
+            resolve({
+              err: false,
+              data: res.body.data,
             })
         })
     })

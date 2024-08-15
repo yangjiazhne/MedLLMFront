@@ -1,5 +1,6 @@
 import '@/lib/fabric/fabric'
 import store from '@/redux/store'
+import {hitShapeTypes} from '@/constants'
 
 // @ts-ignore
 const fabric = window.fabric
@@ -104,4 +105,62 @@ export const getCurrentResult = currentCanvas => {
   })
   console.log('boundingBoxMap', boundingBoxMap)
   return JSON.stringify(boundingBoxMap.filter(item => item.type !== 'group'))
+}
+
+export const renderModelInfer = (inferRes) => {
+  const { project } = store.getState()
+  const {
+    currentCanvas,
+    strokeWidth
+  } = project
+
+  if (inferRes.length === 0) return
+  inferRes?.map((box, index) => {
+    console.log(box)
+    if (!box) {
+      return
+    }
+    box.label = box.label || []
+
+    const id = box.id
+    switch (box.type) {
+      case 'rect': {
+        const left = box.points[0][0] < box.points[2][0] ? box.points[0][0] : box.points[2][0]
+        const top = box.points[0][1] < box.points[2][1] ? box.points[0][1] : box.points[2][1]
+        const _rect = new fabric.Rect({
+          id: id || Date.now(),
+          left: left,
+          top: top,
+          width: box.width,
+          height: box.height,
+          fill: false,
+          strokeWidth: strokeWidth,
+          // opacity: 0.4,
+          opacity: 1,
+          erasable: false,
+          shape: hitShapeTypes.POLYGONPATH,
+          perPixelTargetFind: true,
+        })
+        _rect.setCoords()
+        currentCanvas.add(_rect)
+        break
+      }
+      case 'path': {
+        const _polygon = new fabric.Polygon(box.points, {
+          id: id || Date.now(),
+          shape: hitShapeTypes.POLYGON,
+          strokeWidth: strokeWidth,
+          fill: false,
+          opacity: 1,
+          erasable: false,
+          objectCaching: false,
+          transparentCorners: false,
+          perPixelTargetFind: true,
+        })
+        _polygon.setCoords()
+        currentCanvas.add(_polygon)
+        break
+      }
+    }
+  })
 }

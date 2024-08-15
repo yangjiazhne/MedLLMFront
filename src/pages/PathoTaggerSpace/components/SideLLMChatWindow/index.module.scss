@@ -129,6 +129,8 @@
     margin: 5px 0;
     box-sizing: content-box;
 
+    position: relative;
+
     .infoContainer {
       display: flex;
       flex-direction: column;
@@ -249,6 +251,17 @@
         }
       }
     }
+
+    .chatContainerNewMessageReminder {
+      position: fixed;
+      width: 100%;
+      bottom: 50px;
+      left: 0;
+      text-align: center;
+      color: #fff8;
+      user-select: none;
+      cursor: pointer;
+    }
   }
 
   .inputContainer {
@@ -260,6 +273,10 @@
     &> * {
       border-radius: 20px;
       margin: 0 2px;
+    }
+
+    &> textarea {
+      resize: none;
     }
   }
 }

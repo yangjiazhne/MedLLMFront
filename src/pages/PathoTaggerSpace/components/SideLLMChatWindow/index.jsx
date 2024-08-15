@@ -9,7 +9,7 @@ import {
   BlockOutlined,
   BorderBottomOutlined,
   BorderLeftOutlined,
-  BorderRightOutlined,
+  BorderRightOutlined, CaretDownOutlined,
   CloseOutlined, MinusOutlined,
   SendOutlined
 } from '@ant-design/icons'
@@ -32,10 +32,13 @@ const SideLLMChatWindow = ({
   const [chatWindowHide, setChatWindowHide] = useState(false)
   const [chatWindowHidedPosition, setChatWindowHidedPosition] = useState({x: 5, y: 100})
   const [enableSendBtn, setEnableSendBtn] = useState(false)
+  const [chatListUserScroll, setChatListUserScroll] = useState(false)
+  const [newMessageReminderShow, setNewMessageReminderShow] = useState(false)
   const chatWindowDraggableObject = createRef()
   const chatWindowObject = createRef()
   const chatWindowContainerObject = createRef()
   const chatInputObject = createRef()
+  const chatListObject = createRef()
 
   const chatWindowSize = {
     // 聊天框宽高
@@ -256,6 +259,45 @@ const SideLLMChatWindow = ({
     }
   }
 
+  const onMessageReceived = function() {  // 自动聊天记录滚动
+    let t = chatListObject.current
+    if(chatListUserScroll) {
+      setNewMessageReminderShow(true)
+      return  // 避免影响用户滚动
+    }
+    if(!t) { return }
+    let { clientHeight, scrollHeight } = t
+    if(scrollHeight > clientHeight) {
+      t.scrollBy({top: scrollHeight - clientHeight, behavior: 'smooth'})
+    }
+  }
+  const onChatListScroll = function (event) {  // 用户触发滚动
+    let t = event.target
+    if(!t) {
+      return
+    }
+    let { clientHeight, scrollHeight, scrollTop } = t
+    if(scrollHeight <= clientHeight) {
+      return
+    }
+    let maxScrollHeight = scrollHeight - clientHeight
+    if (maxScrollHeight - scrollTop >= 240) {
+      setChatListUserScroll(true)
+    } else {
+      setChatListUserScroll(false)
+      setNewMessageReminderShow(false)
+    }
+  }
+  const onNewMessageClick = function () {
+    let t = chatListObject.current
+    if(!t) { return }
+    let { clientHeight, scrollHeight, scrollTop } = t
+    if(scrollHeight > clientHeight) {
+      t.scrollBy({top: scrollHeight - clientHeight, behavior: 'smooth'})
+    }
+    setNewMessageReminderShow(false)
+  }
+
   useEffect(() => {
     restoreChatWindowLocation()
   }, [])
@@ -270,6 +312,9 @@ const SideLLMChatWindow = ({
   useEffect(() => {
     document.addEventListener('keydown', handleHotkeysPress)
   }, [])
+  useEffect(() => {
+    onMessageReceived()
+  }, [chatHistory]);
 
 
   return (
@@ -303,7 +348,7 @@ const SideLLMChatWindow = ({
                   <Button type='text' style={{padding: '4px 8px', color: 'white'}} block onClick={() => setChatWindowHide(true)}><CloseOutlined /></Button>
                 </div>
               </div>
-              <div className={styles.chatContainer}>
+              <div className={styles.chatContainer} ref={chatListObject} onScroll={onChatListScroll}>
                 {chatHistory.length === 0 && (
                   <div className={`${styles.infoContainer} ` + 
                     `${floatWindowSide === 'bottom' && !forceVerticalLayout ? styles.horizen : ''}`}>
@@ -350,15 +395,23 @@ const SideLLMChatWindow = ({
                     )
                   ))}
                 </div>
+                <div
+                  className={styles.chatContainerNewMessageReminder}
+                  style={{display: newMessageReminderShow ? 'block' : 'none'}}
+                  onClick={onNewMessageClick}
+                >
+                  <CaretDownOutlined /> 收到了新消息
+                </div>
               </div>
               <div className={styles.inputContainer}>
-                <Input
+                <Input.TextArea
                   placeholder='Type to chat...'
                   type='text'
                   ref={chatInputObject}
                   onChange={handleMessageInput}
                   onKeyDown={handleChatInputKeyDown}
                   style={{color: 'white', backgroundColor: '#345', borderColor: '#567'}}
+                  rows={1}
                 />
                 <Button
                   onClick={() => beforeMessageSend()}

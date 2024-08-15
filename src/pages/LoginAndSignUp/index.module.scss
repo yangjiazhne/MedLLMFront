@@ -4,7 +4,9 @@
   width: 100%;
 
   overflow: hidden;
-  position: relative;
+  position: absolute;
+
+  top: 0;
 
   .loginBg {
     --offset: 20px;
@@ -42,6 +44,11 @@
 
     border-radius: 10px;
     box-shadow: 5px 10px 5px #aaa4;
+
+    @media (max-height: 800px) {
+      top: unset;
+      bottom: 100px;
+    }
 
     .title {
       font-weight: 700;

@@ -7,6 +7,7 @@ import { Dropdown, Input, Menu, Modal, Tooltip } from 'antd'
 import { logOut } from '@/helpers/Utils'
 import { ArrowLeftOutlined, DownOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next';
+import Icon from 'src/assets/icon.jpg'
 
 const Navbar = () => {
   const dispatch = useDispatch()
@@ -102,6 +103,7 @@ const Navbar = () => {
       <div className={styles.navbar}>
         {/*<ArrowLeftOutlined className={styles.backIcon} onClick={history.goBack} />*/}
         <div className={styles.navbarTitleWrap}>
+          <img src={Icon}/>
           <span className={styles.navbarTitle}>{t("title")}</span>
           <Tooltip title="点击查看使用说明" className={styles.navbarIcon}>
             <QuestionCircleOutlined style={{ color: 'rgb(5 12 241)' }} onClick={goToIntroduction} />
@@ -125,8 +127,8 @@ const Navbar = () => {
         {/*    </span>*/}
         {/*  </Dropdown>*/}
         {/*</div>*/}
-        <div className={styles.navbarMenuItem}>
-          {user?.uid && (
+        {user?.uid && (
+          <div className={styles.navbarMenuItem}>
             <Dropdown
               overlay={
                 <Menu>
@@ -140,8 +142,8 @@ const Navbar = () => {
                 <DownOutlined style={{ marginLeft: '5px' }} />
               </span>
             </Dropdown>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       
         

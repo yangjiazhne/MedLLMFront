@@ -12,7 +12,7 @@ import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
 import { searchProject } from '@/request/actions/project'
 import { searchSession } from '@/request/actions/session'
 import { liveQA, searchLLMTaskType } from '@/request/actions/task'
-import { imgUploadPre } from '@/constants'
+import { SERVER_WS } from '@/constants'
 import { getCurrentResult } from './help'
 import styles from './PathoTaggerSpace.module.scss'
 import { RightBar, CanvasAnnotator, SliceList, SideLLMChatWindow, ResultListWindow } from './components'
@@ -249,7 +249,7 @@ const PathoTaggerSpace = () => {
       const userToken = getToken()
 
       const stompClient = Stomp.over(function () {
-        return new WebSocket((`ws://10.214.211.209:8082/task-progress?token=${encodeURIComponent(userToken)}`))
+        return new WebSocket((`${SERVER_WS}task-progress?token=${encodeURIComponent(userToken)}`))
       })
 
       stompClient.debug = () => {}   //让控制台不输出多余的调试信息

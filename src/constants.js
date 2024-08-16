@@ -17,10 +17,7 @@ serverAddress = 'http://10.214.211.135'
 export const imgUploadPre = `${serverAddress}:3030`
 // java服务端地址
 export const SERVER_HOST = `${serverAddress}:3033`
-// python服务端地址
-export const PYTHON_SERVER_HTTP = `${serverAddress}:5088/`
-// export const PYTHON_SERVER_WS = 'ws://10.214.242.156:5088/'
-export const PYTHON_SERVER_WS = 'ws://10.214.242.156:5088/'
+export const SERVER_WS = 'ws://10.214.242.156:5088/'
 
 export const BASE_URL = SERVER_HOST + '/api'
 export const STATIC_URL = SERVER_HOST + '/uploads'

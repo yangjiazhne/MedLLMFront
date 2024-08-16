@@ -58,11 +58,13 @@ const Navbar = () => {
           <span className={styles.navbarTitle}>{t("title")}</span>
         </div>
       </div>
-      <div className={styles.navbarMenu}>
-        <div className={styles.navbarMenuItem}>
-          {isLogin && (<div onClick={logout}>退出登录</div>)}
+      {isLogin && (      
+        <div className={styles.navbarMenu}>
+          <div className={styles.navbarMenuItem}>
+            {isLogin && (<div onClick={logout}>退出登录</div>)}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

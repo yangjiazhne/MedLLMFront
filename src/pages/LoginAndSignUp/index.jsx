@@ -6,7 +6,6 @@ import Login from './Login'
 import SignUp from './SignUp'
 import { useDispatch, useSelector } from 'react-redux'
 import LoginBG from '@/assets/login_bg.jpg'
-import './index.scss'
 
 const LoginAndSignUp = () => {
   const [panelType, setPanelType] = useState('login')
@@ -37,7 +36,7 @@ const LoginAndSignUp = () => {
         <div className={styles.loginBg} style={{background: `transparent url(${LoginBG}) center center no-repeat`}}></div>
         
           {panelType === 'login' && (
-            <div className={styles.loginModuleWrap}> 
+            <div className={styles.loginModuleWrap} style={{marginBottom: '50px'}}> 
               <Login goToSignUp={() => setPanelType('signUp')} handleSave={handleSave} />
             </div>
           )}

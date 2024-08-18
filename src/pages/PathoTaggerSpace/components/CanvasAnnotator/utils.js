@@ -276,6 +276,29 @@ export const drawPolygon = options => {
   return _polygon
 }
 
+// 绘制多边形路径
+export const drawPolygonPath = options => {
+  const { points, color, strokeWidth = 1, id } = options
+  const _polygon = new fabric.Polygon(points, {
+    id: id || Date.now(),
+    // stroke: '#1ae04e',
+    color: color,
+    stroke: color,
+    shape: hitShapeTypes.POLYGONPATH,
+    strokeWidth: strokeWidth,
+    // fill: color,
+    fill: false,
+    // opacity: 0.4,
+    opacity: 1,
+    erasable: false,
+    objectCaching: false,
+    transparentCorners: false,
+    perPixelTargetFind: true,
+  })
+
+  return _polygon
+}
+
 //绘制矩形
 export const drawRectangle = options => {
   const { beginPoint, endPoint, color, strokeWidth = 1, isfinish, id } = options

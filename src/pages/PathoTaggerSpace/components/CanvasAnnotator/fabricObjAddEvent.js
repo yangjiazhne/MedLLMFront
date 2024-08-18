@@ -10,6 +10,7 @@ import {
   drawCircle,
   drawEllipse,
   drawPolygon,
+  drawPolygonPath,
   drawRectangle,
   polygonPositionHandler,
 } from './utils'
@@ -72,7 +73,9 @@ export const fabricObjAddEvent = (
       ChangeActiveObj(o.selected[0])
       const bl = o.selected[0].aCoords.bl
       const _relativeBl = fabric.util.transformPoint(bl, canvas.viewportTransform)
-
+      canvas.forEachObject(function (object) {
+        object.set('fill', false);
+      })
       o.selected[0].set('fill','rgba(0,0,0,0.3)')
 
       setPosition({
@@ -588,7 +591,7 @@ export const generatePolygonPath = (
   const points = drawingObject.current.get('points')
   // .map(_p => ({ x: _p.x + sliceX, y: _p.y + sliceY }))
 
-  const polygon = drawPolygon({
+  const polygon = drawPolygonPath({
     points,
     color: fillColor,
     strokeWidth,

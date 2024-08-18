@@ -22,7 +22,7 @@ const Login = ({ goToSignUp, handleSave }) => {
   return (
     <>
       <div className={styles.title}>&nbsp;登录</div>
-      <Form onFinish={onFinish} form={form} style={{width: '100%'}}>
+      <Form onFinish={onFinish} form={form} style={{width: '100%'}} className={styles.customForm}>
         <div className={styles.formInputItem}>
           <span>邮箱</span>
           <Form.Item

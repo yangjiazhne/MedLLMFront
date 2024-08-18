@@ -24,7 +24,7 @@ const SignUp = ({ goToLogin }) => {
   return (
     <>
       <div className={styles.title}>&nbsp;注册</div>
-      <Form onFinish={onFinish} form={form} style={{width: '100%'}}>
+      <Form onFinish={onFinish} form={form} style={{width: '100%'}} className={styles.customForm}>
         <div className={styles.formInputItem}>
           <span>用户名</span>
           <Form.Item

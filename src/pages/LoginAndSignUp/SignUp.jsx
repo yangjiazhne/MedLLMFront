@@ -10,8 +10,8 @@ const SignUp = ({ goToLogin }) => {
   // 用户注册
   const onFinish = async values => {
     setLoading(true)
-    const { firstName, lastName, email, password } = values
-    const res = await userRegister(firstName+lastName, email, password)
+    const { username, email, password, phone, profilelink } = values
+    const res = await userRegister(username, email, password, phone, profilelink)
 
     setLoading(false)
     if (!res.err) Modal.success({

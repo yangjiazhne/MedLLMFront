@@ -43,6 +43,7 @@ const SideLLMChatWindow = ({
   const chatWindowContainerObject = createRef()
   const chatInputObject = createRef()
   const chatListObject = createRef()
+  const [inputValue, setInputValue] = useState("");
 
   const [isClickGetHistory, setIsClickGetHistory] = useState(false)
 
@@ -284,7 +285,7 @@ const SideLLMChatWindow = ({
   const beforeMessageSend = function (event) {
     let chatContent = ""
     if(!event) {
-      chatContent = chatInputObject.current.input.defaultValue
+      chatContent = chatInputObject.current?.resizableTextArea?.textArea?.value ?? "";
     } else {
       chatContent = event.nativeEvent.target.value ?? ""
     }
@@ -292,18 +293,26 @@ const SideLLMChatWindow = ({
       return;
     }
     onMessageSend(chatContent)
+
+    // 清空文本框内容
+    setInputValue("");
   }
   const handleMessageInput = function(event) {
     let chatMessage = event.nativeEvent.target.value
-    console.log(chatMessage)
+    setInputValue(chatMessage);
     setEnableSendBtn(chatMessage !== "")
   }
-  const handleChatInputKeyDown = function(event) {
-    let {keyCode} = event
-    if(keyCode == 13) {  // ENTER
-      beforeMessageSend(event)
+  const handleChatInputKeyDown = (event) => {
+    const { keyCode } = event;
+    if (keyCode === 13) { // ENTER
+      if (!event.ctrlKey) {
+        event.preventDefault();
+        beforeMessageSend(event);
+      } else {
+        chatInputObject.current.resizableTextArea.textArea.value += '\n';
+      }
     }
-  }
+  };
 
   useEffect(() => {
     restoreChatWindowLocation()
@@ -428,6 +437,7 @@ const SideLLMChatWindow = ({
                   placeholder='Type to chat...'
                   type='text'
                   ref={chatInputObject}
+                  value={inputValue}
                   onChange={handleMessageInput}
                   onKeyDown={handleChatInputKeyDown}
                   style={{color: 'white', backgroundColor: '#345', borderColor: '#567'}}

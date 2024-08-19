@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import styles from './index.module.scss'
 import { Link } from 'react-router-dom'
 import { searchGroup } from '@/request/actions/group'
-import { DeleteOutlined, SmallDashOutlined,AppstoreOutlined } from '@ant-design/icons'
+import { DeleteOutlined, SmallDashOutlined,AppstoreOutlined,VerticalAlignTopOutlined } from '@ant-design/icons'
 // @ts-ignore
 import invalidIcon from '@/assets/invalid.png'
 import { useHistory } from 'react-router'
@@ -26,6 +26,9 @@ const SingleProject = ({ groupDetail, deleteGroup, projectId }) => {
             <Menu>
               <Menu.Item danger onClick={() => deleteGroup(groupDetail.imageGroupId)}>
                 <DeleteOutlined style={{ color: 'red' }} /> 删除
+              </Menu.Item>
+              <Menu.Item onClick={() => history.push(`/userHome/project-file/${projectId}?type=Raw`)}>
+                <VerticalAlignTopOutlined style={{ color: '#1890ff' }} /> 上传
               </Menu.Item>
             </Menu>
           }

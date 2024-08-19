@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react'
 import styles from './index.module.scss'
-import { Button, Empty, message, Modal, Spin, Form, Divider, Input } from 'antd'
+import { Button, Empty, message, Modal, Spin, Form, Divider, Input, Breadcrumb } from 'antd'
 import { ExclamationCircleOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons'
 import { VButton } from '@/components'
-import { useHistory, useParams } from 'react-router-dom'
+import { Link, useHistory, useParams } from 'react-router-dom'
 import { logOut } from '@/helpers/Utils'
 import {
   deleteGroup,
@@ -167,6 +167,14 @@ const MyGroupDatasets = () => {
   return (
     <Spin spinning={loading}>
       <div className={styles.titleWrap}>
+        <Breadcrumb>
+          <Breadcrumb.Item>
+            <Link to="/userHome/my-projects" style={{ color: 'blue' }}>
+              {'userHome'}
+            </Link>
+          </Breadcrumb.Item>
+          <Breadcrumb.Item>{'group'}</Breadcrumb.Item>
+        </Breadcrumb>
         <div className={styles.title}>{'分组'}</div>
         <div style={{ width: '5px' }} />
         <VButton

@@ -256,7 +256,7 @@ const PathoTaggerSpace = () => {
 
       let subscription;
       
-      const taskId = `medllm_dev_pathology_image_convert_${currentImage.imageId}`
+      const taskId = `medllm_pathology_image_convert_${currentImage.imageId}`
 
       // 连接到 WebSocket 服务器
       stompClient.connect({}, frame => {

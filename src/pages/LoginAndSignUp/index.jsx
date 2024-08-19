@@ -33,7 +33,7 @@ const LoginAndSignUp = () => {
     <>
       <Navbar />
       <div className={styles.loginWrap}>
-        <div className={styles.loginBg} style={{background: `transparent url(${LoginBG}) center center no-repeat`}}></div>
+        <div className={styles.loginBg} style={{background: `transparent url(${LoginBG}) center center no-repeat`, backgroundSize: 'cover'}}></div>
         
           {panelType === 'login' && (
             <div className={styles.loginModuleWrap} style={{marginBottom: '50px'}}> 

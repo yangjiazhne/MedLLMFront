@@ -32,6 +32,14 @@ const CreateProjectView = () => {
     if (projectId) {
       // 获取项目详情
       const result = await searchProject(projectId)
+      if(result.err){
+        Modal.error({
+          title: '提示',
+          content: '您的登录已过期，请重新登陆',
+          onOk: () => logOut(history),
+        })
+      }
+      
       const projectDetails = result.data.content[0]
 
       setPImageType(projectDetails.imageType.imageTypeId)
@@ -51,19 +59,12 @@ const CreateProjectView = () => {
     const { project_name, instructions } = values
 
     const projectRes = await searchProject()
-    if(projectRes.err){
-      Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
-        onOk: () => logOut(history),
-      })
-    }
 
     const allProjects = projectRes.data.content
 
     const matchingProject = allProjects.find(p => p.projectName === project_name)
-
-    if(matchingProject.length!==0 && matchingProject[0].projectId.toString() !== projectId){
+    
+    if((matchingProject && matchingProject.length !== 0 && !projectId) || (matchingProject && matchingProject.length !== 0 && projectId && matchingProject[0].projectId.toString() !== projectId)){
       Modal.error({
         title: '该数据集名称已存在！',
         content: '请更换一个数据集名称',

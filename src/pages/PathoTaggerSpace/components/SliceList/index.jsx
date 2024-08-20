@@ -12,7 +12,7 @@ import { imgError } from './config'
 const { Search } = Input;
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 
-const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize, setHistoryChat}) => {
+const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize, setHistoryChat, setLLMChatHistory, setIsClickGetHistory, setNewMessageReminderShow}) => {
     const {
         currentGroupImages, // 项目图片信息
         currentProjectGroups,
@@ -71,6 +71,9 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
     }
 
     const changeImage = async (image) => {
+        setLLMChatHistory([])
+        setIsClickGetHistory(false)
+        setNewMessageReminderShow(false)
         const sessionListRes = await searchSession(image.imageId)
 
         image.status = sessionListRes.data[0].status

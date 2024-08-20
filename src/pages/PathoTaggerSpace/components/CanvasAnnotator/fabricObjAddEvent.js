@@ -46,7 +46,8 @@ export const fabricObjAddEvent = (
   ChangeActiveObj, //更新目前选中对象
   setIsQuestion,  // 是否在框选LLM区域
   dispatch,
-  appendChatContent
+  appendChatContent,
+  setIsWaitAnswer
 ) => {
   canvas.on({
     'selection:created': o => {
@@ -528,7 +529,8 @@ export const fabricObjAddEvent = (
               currentImage,
               appendChatContent,
               currentQuestion,
-              dispatch
+              dispatch,
+              setIsWaitAnswer
             )
 
             drawingObject.current = null
@@ -666,7 +668,8 @@ const getLLMRegion = async (
   currentImage,
   appendChatContent,
   currentQuestion,
-  dispatch
+  dispatch,
+  setIsWaitAnswer
 ) => {
   if (drawingObject.current) {
     // 清除上一次绘制的矩形
@@ -694,7 +697,7 @@ const getLLMRegion = async (
     type: 'UPDATE_CURRENT_SHAPE',
     payload: hitShapeTypes.NONE,
   })
-
+  setIsWaitAnswer(true)
   const res = await liveQA({
     "llmTaskTypeId": 1,
     "imageId": currentImage.imageId,
@@ -704,7 +707,7 @@ const getLLMRegion = async (
     "width": width,
     "height": height
   })
-
+  setIsWaitAnswer(false)
   appendChatContent(res.data, "assistant")
 
 }

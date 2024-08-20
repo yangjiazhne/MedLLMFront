@@ -30,7 +30,8 @@ const CanvasAnnotator = ({
   setChangeSession,
   isQuestion,
   setIsQuestion,
-  appendChatContent
+  appendChatContent,
+  setIsWaitAnswer
 }) => {
   // 初始化openSeadragon图片查看器
   // 初始化 openSeadragon
@@ -245,7 +246,8 @@ const CanvasAnnotator = ({
       ChangeActiveObj,
       setIsQuestion,
       dispatch,
-      appendChatContent
+      appendChatContent,
+      setIsWaitAnswer
     )
   }, [pathoImgInfo])
 

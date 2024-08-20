@@ -27,13 +27,17 @@ const SideLLMChatWindow = ({
   onMessageSend,
   onMessageClick,
   historyChat,
-  appendChatHistory
+  appendChatHistory,
+  isClickGetHistory,
+  setIsClickGetHistory,
+  newMessageReminderShow,
+  setNewMessageReminderShow,
+  isWaitAnswer
 }) => {
   const [floatWindowSide, setFloatWindowSideInner] = useState('right')
   const [chatWindowExtraStyle, setChatWindowExtraStyle] = useState({})  // 额外的样式信息，用于存储resize后的宽高
   const [forceVerticalLayout, setForceVerticalLayout] = useState(false)  // 对话窗口横置后，是否保持竖向布局
   const [chatListUserScroll, setChatListUserScroll] = useState(false)
-  const [newMessageReminderShow, setNewMessageReminderShow] = useState(false)
   const [chatWindowPosition, setChatWindowPosition] = useState({x: 0, y: 0})
   const [chatWindowHide, setChatWindowHide] = useState(false)
   const [chatWindowHidedPosition, setChatWindowHidedPosition] = useState({x: 5, y: 100})
@@ -44,8 +48,6 @@ const SideLLMChatWindow = ({
   const chatInputObject = createRef()
   const chatListObject = createRef()
   const [inputValue, setInputValue] = useState("");
-
-  const [isClickGetHistory, setIsClickGetHistory] = useState(false)
 
   const chatWindowSize = {
     // 聊天框宽高
@@ -307,6 +309,9 @@ const SideLLMChatWindow = ({
     if (keyCode === 13) { // ENTER
       if (!event.ctrlKey) {
         event.preventDefault();
+        if(isWaitAnswer){
+          return
+        }
         beforeMessageSend(event);
       } else {
         chatInputObject.current.resizableTextArea.textArea.value += '\n';
@@ -445,7 +450,7 @@ const SideLLMChatWindow = ({
                 />
                 <Button
                   onClick={() => beforeMessageSend()}
-                  disabled={!enableSendBtn}
+                  disabled={!enableSendBtn || isWaitAnswer}
                   style={{padding: '5px', width: '35px', color: enableSendBtn ? 'white' : '#888', backgroundColor: '#345', borderColor: '#567'}}
                 >
                   <SendOutlined />

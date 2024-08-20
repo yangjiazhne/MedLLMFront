@@ -55,6 +55,9 @@ const PathoTaggerSpace = () => {
 
   const [isQuestion, setIsQuestion] = useState(false)
   const [historyChat, setHistoryChat] = useState([])
+  const [isClickGetHistory, setIsClickGetHistory] = useState(false)
+  const [newMessageReminderShow, setNewMessageReminderShow] = useState(false)
+  const [isWaitAnswer, setIsWaitAnswer] = useState(false)
 
   const [searchValue, setSearchValue] = useState('')  //搜索框
   const [currentPage, setCurrentPage] = useState(1)   //控制当前页数
@@ -191,6 +194,13 @@ const PathoTaggerSpace = () => {
         type: 'UPDATE_CURRENT_LLM_TASK_TYPE',
         payload: taskList.data
       })
+
+      if(defaultGroupInfo){
+        dispatch({
+          type: 'UPDATE_DEFAULT_GROUP_INFO',
+          payload: null
+        })
+      }
 
       setProjectHitsFetchEnd(true)
 
@@ -434,12 +444,13 @@ const PathoTaggerSpace = () => {
 
   const fetchLLmAnswer = async (content) => {
     setIsQuestion(false)
+    setIsWaitAnswer(true)
     const res = await liveQA({
       "llmTaskTypeId": 1,
       "imageId": currentImage.imageId,
       "question": content
     })
-
+    setIsWaitAnswer(false)
     appendChatContent(res.data, "assistant")
   }
 
@@ -504,13 +515,13 @@ const PathoTaggerSpace = () => {
   const [resultBtnList, setResultBtnList] = useState([])
   const onBtnClick = async (resItem) => {
     appendChatContent(resItem.item.prompt)
-    
+    setIsWaitAnswer(true)
     const res = await liveQA({
         "llmTaskTypeId": resItem.item.llmTaskTypeId,
         "imageId": currentImage.imageId,
         "question": resItem.item.prompt
       })
-
+    setIsWaitAnswer(false)
     appendChatContent(res.data, "assistant")
   }
 
@@ -576,6 +587,9 @@ const PathoTaggerSpace = () => {
                   setCurrentPage={setCurrentPage}
                   setCurrentPageSize={setCurrentPageSize}
                   setHistoryChat={setHistoryChat}
+                  setLLMChatHistory={setLLMChatHistory}
+                  setIsClickGetHistory={setIsClickGetHistory}
+                  setNewMessageReminderShow={setNewMessageReminderShow}
                 />
           )}
           {pathoImgInfo.url !== '' && (<div className={styles.viewContainer}>
@@ -584,6 +598,7 @@ const PathoTaggerSpace = () => {
                   isQuestion={isQuestion}
                   setIsQuestion={setIsQuestion}
                   appendChatContent={appendChatContent}
+                  setIsWaitAnswer={setIsWaitAnswer}
                 />
               
                 {(currentImage?.status === 3) &&(
@@ -596,6 +611,11 @@ const PathoTaggerSpace = () => {
                       onMessageClick={onMessageClick}
                       historyChat={historyChat}
                       appendChatHistory={appendChatHistory}
+                      isClickGetHistory={isClickGetHistory}
+                      setIsClickGetHistory={setIsClickGetHistory}
+                      newMessageReminderShow={newMessageReminderShow}
+                      setNewMessageReminderShow={setNewMessageReminderShow}
+                      isWaitAnswer={isWaitAnswer}
                   >
                   </SideLLMChatWindow>
                 )}

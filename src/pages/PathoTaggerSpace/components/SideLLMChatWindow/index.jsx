@@ -34,6 +34,7 @@ const SideLLMChatWindow = ({
   const [enableSendBtn, setEnableSendBtn] = useState(false)
   const [chatListUserScroll, setChatListUserScroll] = useState(false)
   const [newMessageReminderShow, setNewMessageReminderShow] = useState(false)
+  const [chatInputValue, setChatInputValue] = useState("")
   const chatWindowDraggableObject = createRef()
   const chatWindowObject = createRef()
   const chatWindowContainerObject = createRef()
@@ -237,25 +238,24 @@ const SideLLMChatWindow = ({
   }
 
   const beforeMessageSend = function (event) {
-    let chatContent = ""
-    if(!event) {
-      chatContent = chatInputObject.current.input.defaultValue
-    } else {
-      chatContent = event.nativeEvent.target.value ?? ""
-    }
+    let chatContent = chatInputValue + ""
     if (chatContent === "") {
       return;
     }
     onMessageSend(chatContent)
+    setChatInputValue("")
+    setEnableSendBtn(false)
   }
   const handleMessageInput = function(event) {
     let chatMessage = event.nativeEvent.target.value
+    setChatInputValue(chatMessage)
     setEnableSendBtn(chatMessage !== "")
   }
   const handleChatInputKeyDown = function(event) {
     let {keyCode} = event
     if(keyCode == 13) {  // ENTER
       beforeMessageSend(event)
+      event.preventDefault()
     }
   }
 
@@ -412,6 +412,7 @@ const SideLLMChatWindow = ({
                   onKeyDown={handleChatInputKeyDown}
                   style={{color: 'white', backgroundColor: '#345', borderColor: '#567'}}
                   rows={1}
+                  value={chatInputValue}
                 />
                 <Button
                   onClick={() => beforeMessageSend()}

@@ -35,7 +35,15 @@ import { getTaskList } from '@/request/actions/task'
 import { imgUploadPre } from '@/constants'
 import { getCurrentResult, handleKeyDown, renderModelInfer } from './help'
 import styles from './PathoTaggerSpace.module.scss'
-import { RightBar, CanvasAnnotator, DoneTopBar, SliceList, SideLLMChatWindow, ResultListWindow } from './components'
+import {
+  RightBar,
+  CanvasAnnotator,
+  DoneTopBar,
+  SliceList,
+  SideLLMChatWindow,
+  ResultListWindow,
+  DraggableWindow
+} from './components'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 
 const PathoTaggerSpace = () => {
@@ -576,6 +584,7 @@ const PathoTaggerSpace = () => {
         <b>视窗内图片大小: </b>
         {pathoViewSize.width} x {pathoViewSize.height}
       </div> */}
+      <DraggableWindow chatHistory={LLMChatHistory} onMessageSend={onMessageCallback} onMessageClick={onMessageClick()}/>
     </Spin>
   )
 }

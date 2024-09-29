@@ -220,7 +220,7 @@
         "editTagInfo": "Edit Annotation Information", 
         "deleteTagArea": "Delete Annotation Area", 
         "width": "Width:", 
-        "height": "Length:",
+        "height": "Height:",
         "moreList":{
             "moreFeatures": "More features",
             "returnPrePage": "Return to the previous page",

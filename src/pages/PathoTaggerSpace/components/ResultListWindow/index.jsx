@@ -154,7 +154,7 @@ const ResultListWindow = ({
       
       <div className={styles.minimize}>
           <div onClick={(e) => beforeMinimizeStatus(null, !minimizeStatus)}
-               title="预推理结果"
+               title={t('PathoSpace.preInferResult.predictedResults')}
                style={{backgroundColor: `${minimizeStatus ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}
                className={styles.minimizeBtn}>
             <VIcon type="icon-model" style={{ fontSize: '28px', marginTop:'10px' }}/>

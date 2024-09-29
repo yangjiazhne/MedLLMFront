@@ -90,7 +90,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         const total = lines.length
         if (total < 1) {
           Modal.error({
-            content: t('ProjectDetail.uploadData.success'),
+            content: t('ProjectDetail.uploadData.failed'),
           })
           setUploading(false)
           return 0
@@ -104,7 +104,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         if (res.err) setErrorMsg(res.data)
         else {
           Modal.success({
-            content: t('ProjectDetail.uploadData.failed'),
+            content: t('ProjectDetail.uploadData.success'),
             onOk: () => {
               history.push('/userHome/projects/' + projectId.toString())
             },

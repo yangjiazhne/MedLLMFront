@@ -79,7 +79,6 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
         const sessionListRes = await searchSession(image.imageId)
 
         image.status = sessionListRes.data[0].status
-        // const sessionListRes = await searchSession(26)
 
         if(sessionListRes.data.length > 0){
             const sessionList = sessionListRes.data[0].qaPairHistoryList.map(item => [
@@ -89,7 +88,9 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
             },
             {
                 role: "assistant",
-                msg: item.answer
+                msg: item.answer,
+                visualResult: item.visualResult,
+                region: item.region
             }
             ]).reduce((acc, curr) => acc.concat(curr), []);
 

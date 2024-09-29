@@ -13,7 +13,7 @@ import { searchProject } from '@/request/actions/project'
 import { searchSession } from '@/request/actions/session'
 import { liveQA, searchLLMTaskType } from '@/request/actions/task'
 import { SERVER_WS } from '@/constants'
-import { getCurrentResult, renderModelInfer, convertCoord } from './help'
+import { getCurrentResult, renderModelInfer } from './help'
 import styles from './PathoTaggerSpace.module.scss'
 import { RightBar, CanvasAnnotator, SliceList, SideLLMChatWindow, ResultListWindow, DraggableWindow } from './components'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
@@ -70,7 +70,6 @@ const PathoTaggerSpace = () => {
   // 从 localStorage 加载保存的语言设置
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'zh'; // 默认语言为中文
-    console.log(savedLanguage)
     i18n.changeLanguage(savedLanguage);
   }, [i18n]);
 
@@ -151,17 +150,18 @@ const PathoTaggerSpace = () => {
         const sessionListRes = await searchSession(imageRes.data.content[0].imageId)
 
         imageRes.data.content[0].status = sessionListRes.data[0].status
-        // const sessionListRes = await searchSession(26)
 
         if(sessionListRes.data.length > 0){
           const sessionList = sessionListRes.data[0].qaPairHistoryList.map(item => [
             {
               role: "user",
-              msg: item.question
+              msg: item.question,
             },
             {
               role: "assistant",
-              msg: item.answer
+              msg: item.answer,
+              visualResult: item.visualResult,
+              region: item.region
             }
           ]).reduce((acc, curr) => acc.concat(curr), []);
 
@@ -340,11 +340,13 @@ const PathoTaggerSpace = () => {
         const sessionList = sessionListRes.data[0].qaPairHistoryList.map(item => [
           {
             role: "user",
-            msg: item.question
+            msg: item.question,
           },
           {
             role: "assistant",
-            msg: item.answer
+            msg: item.answer,
+            visualResult: item.visualResult,
+            region: item.region
           }
         ]).reduce((acc, curr) => acc.concat(curr), []);
 
@@ -498,8 +500,8 @@ const PathoTaggerSpace = () => {
         "llmTaskTypeId": 1,
         "imageId": currentImage.imageId,
         "question": content,
-        "x": left,
-        "y": top,
+        "left": left,
+        "top": top,
         "width": width,
         "height": height
       })
@@ -511,16 +513,23 @@ const PathoTaggerSpace = () => {
       res = await liveQA({
         "llmTaskTypeId": 1,
         "imageId": currentImage.imageId,
-        "question": content
+        "question": content,
+        "left": left,
+        "top": top,
+        "width": width,
+        "height": height
       })
     }
 
-    // const inferRes = convertCoord(width, height, top, left, res, scale)
-
-    // renderModelInfer(inferRes)
-
     setIsWaitAnswer(false)
-    appendChatContent(res.data, "assistant")
+    appendChatContent(res.data.answer, "assistant", res.data.visualResult, res.data.region)
+
+    const scale = 1000 / pathoImgInfo.size.width
+
+    if(res.data.visualResult.length > 0){
+      renderModelInfer(res.data.visualResult, scale, "#9bcd45", dispatch)
+    }
+
   }
 
   const isDrawRegion = (content) => {
@@ -549,7 +558,7 @@ const PathoTaggerSpace = () => {
     })
   }
 
-  const appendChatContent = function (msg, role="user", click=false) {
+  const appendChatContent = function (msg, role="user", visualResult, region) {
     let chatHistory = LLMChatHistoryTmp.current
     let maxId = -1
     for(let chatItem of chatHistory) {
@@ -559,14 +568,14 @@ const PathoTaggerSpace = () => {
       id: maxId,
       role,
       msg,
-      click
+      visualResult,
+      region
     }
     chatHistory.push(thisChat)
     setLLMChatHistory(chatHistory)
   }
 
   const onMessageCallback = function (content) {
-    console.log("get message send callback", content)
     setIsQuestion(true)
     dispatch({
       type: 'UPDATE_CURRENT_QUESTION',
@@ -578,20 +587,42 @@ const PathoTaggerSpace = () => {
   }
 
   const onMessageClick = function (message) {
-    console.log("get message clicked", message)
+    const scale = 1000 / pathoImgInfo.size.width
+
+    if(message.region.height !== Number(pathoImgInfo.size.height) && message.region.width !== Number(pathoImgInfo.size.width)){
+      renderModelInfer([message.region], scale, "#fa1313", dispatch)
+    }
+
+    if(message.visualResult.length > 0){
+      renderModelInfer(message.visualResult, scale, "#9bcd45", dispatch)
+    }
   }
 
   const [resultBtnList, setResultBtnList] = useState([])
   const onBtnClick = async (resItem) => {
     appendChatContent(resItem.item.prompt)
     setIsWaitAnswer(true)
+    const width = pathoImgInfo.size.width
+    const height = pathoImgInfo.size.height
+    const top = 0
+    const left = 0
     const res = await liveQA({
         "llmTaskTypeId": resItem.item.llmTaskTypeId,
         "imageId": currentImage.imageId,
-        "question": resItem.item.prompt
+        "question": resItem.item.prompt,
+        "left": left,
+        "top": top,
+        "width": width,
+        "height": height
       })
     setIsWaitAnswer(false)
-    appendChatContent(res.data, "assistant")
+    appendChatContent(res.data.answer, "assistant", res.data.visualResult, res.data.region)
+    const scale = 1000 / pathoImgInfo.size.width
+
+    if(res.data.visualResult.length > 0){
+      renderModelInfer(res.data.visualResult, scale, "#9bcd45", dispatch)
+    }
+
   }
 
   useEffect(() => {

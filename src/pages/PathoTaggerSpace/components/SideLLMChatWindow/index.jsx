@@ -17,6 +17,7 @@ import {
   CaretDownOutlined,
 } from '@ant-design/icons'
 import { Button, Input } from 'antd'
+import { useSelector } from 'react-redux'
 // @ts-ignore
 import LLMIcon from '@/assets/icon.jpg'
 import Draggable from 'react-draggable'
@@ -50,6 +51,13 @@ const SideLLMChatWindow = ({
   const chatListObject = createRef()
   const [inputValue, setInputValue] = useState("");
   const { t, i18n } = useTranslation()
+
+  const {
+    pathoImgInfo, // 病理图片信息
+  } = useSelector(
+    // @ts-ignore
+    state => state.project
+  )
 
   const chatWindowSize = {
     // 聊天框宽高
@@ -419,25 +427,21 @@ const SideLLMChatWindow = ({
                     (item.role === 'user' || item.role === 'assistant') && (
                       <div key={index} className={`${styles.chatListItem} ${item.role === "user" ? styles.userContent : ""}`}>
                         <div>
-                          <div>{item.msg}</div>
-                          {(item.click ?? false) && (
-                            <div className={styles.hr}></div>
-                          )}
-                          {(item.click ?? false) && (
-                            <Button type='text' size='small' onClick={() => onMessageClick(item)}>显示图形诊断结果</Button>
-                          )}
+                          {item.msg &&(<div>{item.msg}</div>)}
+                          {item.msg && item.visualResult?.length > 0 && (<div className={styles.hr}></div>)}
+                          {item.visualResult?.length > 0 && (<Button type='link' size='small' onClick={() => onMessageClick(item)}>{t('PathoSpace.dialog.showResult')}</Button>)}
                         </div>
                       </div>
                     )
                   ))}
                 </div>
-                <div
+                {/* <div
                   className={styles.chatContainerNewMessageReminder}
                   style={{display: newMessageReminderShow ? 'block' : 'none'}}
                   onClick={onNewMessageClick}
                 >
                   <CaretDownOutlined /> {t('PathoSpace.dialog.newMessage')}
-                </div>
+                </div> */}
               </div>
               <div className={styles.inputContainer}>
                 <Input.TextArea

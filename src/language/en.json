@@ -296,7 +296,8 @@
             "efficacyContent": "Tasks for prognosis, efficacy prediction",
             "basicTitle": "Basic Abilities",
             "basicContent": "Identification of blood vessels, cells, tissues, glands",
-            "inputText":"Type to chat..."
+            "inputText":"Type to chat...",
+            "showResult": "Display diagnostic results"
         }
     }
 }

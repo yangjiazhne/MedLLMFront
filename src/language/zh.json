@@ -296,7 +296,8 @@
             "efficacyContent":"预后、疗效等预测任务",
             "basicTitle":"基础能力",
             "basicContent":"血管、细胞、组织、腺体等识别",
-            "inputText":"键入聊天..."
+            "inputText":"键入聊天...",
+            "showResult": "显示图形诊断结果"
         }
     }
 }

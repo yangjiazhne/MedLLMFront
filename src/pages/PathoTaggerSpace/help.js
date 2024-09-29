@@ -1,6 +1,7 @@
 import '@/lib/fabric/fabric'
 import store from '@/redux/store'
 import {hitShapeTypes} from '@/constants'
+import { ConsoleSqlOutlined } from '@ant-design/icons'
 
 // @ts-ignore
 const fabric = window.fabric
@@ -9,7 +10,6 @@ export const getCurrentResult = currentCanvas => {
   const { project } = store.getState()
   const { boundingBoxMap, projectHits } = project
 
-  console.log(currentCanvas.getObjects())
   const finalTaggerInfo = currentCanvas.getObjects().map(item => {
     const baseInfo = {
       id: item.id,
@@ -107,7 +107,7 @@ export const getCurrentResult = currentCanvas => {
   return JSON.stringify(boundingBoxMap.filter(item => item.type !== 'group'))
 }
 
-export const renderModelInfer = (inferRes) => {
+export const renderModelInfer = (inferRes, scale, color, dispatch) => {
   const { project } = store.getState()
   const {
     currentCanvas,
@@ -115,42 +115,52 @@ export const renderModelInfer = (inferRes) => {
   } = project
 
   if (inferRes.length === 0) return
-  inferRes?.map((box, index) => {
-    console.log(box)
-    if (!box) {
-      return
-    }
 
+  // 获取当前画布上的所有对象
+  const existingObjects = currentCanvas.getObjects();
+
+  // 调用 scaleShapes 函数进行缩放
+  const scaledInferRes = scaleShapes(inferRes, scale);
+
+  scaledInferRes?.forEach((box, index) => {
+    // 检查是否已存在相同 id 的形状
     const id = box.id
+    const shapeExists = existingObjects.some(obj => obj.id === id);
+
+    if (shapeExists) return; // 如果形状存在则跳过绘制
+    
     switch (box.type) {
       case 'rect': {
-        const left = box.points[0][0] < box.points[2][0] ? box.points[0][0] : box.points[2][0]
-        const top = box.points[0][1] < box.points[2][1] ? box.points[0][1] : box.points[2][1]
         const _rect = new fabric.Rect({
           id: id || Date.now(),
-          left: left,
-          top: top,
+          left: box.left,
+          top: box.top, 
           width: box.width,
           height: box.height,
           fill: false,
           strokeWidth: strokeWidth,
-          stroke: '#9acd32',
-          // opacity: 0.4,
+          stroke: color,
+          color:color,
           opacity: 1,
           erasable: false,
-          shape: hitShapeTypes.POLYGONPATH,
+          shape: hitShapeTypes.RECT,
           perPixelTargetFind: true,
         })
         _rect.setCoords()
         currentCanvas.add(_rect)
         break
       }
-      case 'path': {
-        const _polygon = new fabric.Polygon(box.points, {
+      case 'polygon': {
+        const points = box.points.map(point => ({
+          x: point[0],
+          y: point[1],
+        }))
+        const _polygonPath = new fabric.Polygon(points, {
           id: id || Date.now(),
-          shape: hitShapeTypes.POLYGON,
+          shape: hitShapeTypes.POLYGONPATH,
           strokeWidth: strokeWidth,
-          stroke: '#9acd32',
+          stroke: color,
+          color:color,
           fill: false,
           opacity: 1,
           erasable: false,
@@ -158,30 +168,51 @@ export const renderModelInfer = (inferRes) => {
           transparentCorners: false,
           perPixelTargetFind: true,
         })
-        _polygon.setCoords()
-        currentCanvas.add(_polygon)
+        _polygonPath.setCoords()
+        currentCanvas.add(_polygonPath)
         break
       }
     }
   })
+
+  dispatch({
+    type: 'UPDATE_CURRENT_CANVAS',
+    payload: currentCanvas,
+  })
 }
 
-function mapObject(obj, scale, top, left, fabricScale) {
-  if (obj.type === 'rect') {
-      // 缩放矩形的尺寸和位置，先转化到原图坐标，在转化到fabric坐标
-      obj.width = obj.width * scale / fabricScale;
-      obj.height = obj.height * scale / fabricScale;
-      obj.left = (obj.left * scale + left) / fabricScale;
-      obj.top = (obj.top * scale + top) / fabricScale;
-  } else if (obj.type === 'path') {
-      // 缩放多边形的点
-      obj.points = obj.points.map(([x, y]) => [(x * scale + left) / fabricScale, (y * scale + top) / fabricScale]);
-  }
-  return obj;
-}
+// function mapObject(obj, scale, top, left, fabricScale) {
+//   if (obj.type === 'rect') {
+//       // 缩放矩形的尺寸和位置，先转化到原图坐标，在转化到fabric坐标
+//       obj.width = obj.width * scale / fabricScale;
+//       obj.height = obj.height * scale / fabricScale;
+//       obj.left = (obj.left * scale + left) / fabricScale;
+//       obj.top = (obj.top * scale + top) / fabricScale;
+//   } else if (obj.type === 'path') {
+//       // 缩放多边形的点
+//       obj.points = obj.points.map(([x, y]) => [(x * scale + left) / fabricScale, (y * scale + top) / fabricScale]);
+//   }
+//   return obj;
+// }
 
-export const convertCoord = (width, height, top, left, inferRes, fabricScale) => {
-  const scale = Math.max(width, height)  //此处width, height, top, left对应的是原图像素
-
-  return inferRes.map(obj => mapObject(obj, scale, top, left, fabricScale));
+function scaleShapes(data, scale) {
+  return data.map(item => {
+      if (item.type === "rect") {
+          // 对于矩形的宽高和位置进行缩放
+          return {
+              ...item,
+              width: item.width * scale,
+              height: item.height * scale,
+              left: item.left * scale,
+              top: item.top * scale
+          };
+      } else if (item.type === "polygon") {
+          // 对于多边形的每个点进行缩放
+          return {
+              ...item,
+              points: item.points.map(point => [point[0] * scale, point[1] * scale])
+          };
+      }
+      return item;
+  });
 }

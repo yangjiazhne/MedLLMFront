@@ -4,11 +4,12 @@ import styles from './index.module.scss'
 import { userLogin } from '@/request/actions/user'
 import { isEmail } from '@/helpers/Utils'
 import useQuery from '@/hooks/useQuery'
+import { useTranslation } from 'react-i18next';
 
 const Login = ({ goToSignUp, handleSave }) => {
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
-
+  const { t, i18n } = useTranslation();
   const onFinish = async values => {
     setLoading(true)
     const { email, password } = values
@@ -21,21 +22,21 @@ const Login = ({ goToSignUp, handleSave }) => {
 
   return (
     <>
-      <div className={styles.title}>&nbsp;登录</div>
+      <div className={styles.title} style={{letterSpacing: i18n.language === 'en' ? '5px' : '20px'}}>&nbsp;{t('Login.title')}</div>
       <Form onFinish={onFinish} form={form} style={{width: '100%'}} className={styles.customForm}>
         <div className={styles.formInputItem}>
-          <span>邮箱</span>
+          <span>{t('Login.email')}</span>
           <Form.Item
             name="email"
             className={styles.antFormItem}
             rules={[
               {
                 type: 'email',
-                message: '请输入合法的邮箱地址!',
+                message: t('Login.emailInvalid'),
               },
               {
                 required: true,
-                message: '请输入你的邮箱地址!',
+                message: t('Login.emailRequired'),
               },
             ]}
           >
@@ -43,27 +44,27 @@ const Login = ({ goToSignUp, handleSave }) => {
           </Form.Item>
         </div>
         <div className={styles.formInputItem}>
-          <span>密码</span>
+          <span>{t('Login.password')}</span>
           <Form.Item
             name="password"
             className={styles.antFormItem}
             rules={[
               {
                 required: true,
-                message: '请输入你的密码!',
+                message: t('Login.passwordRequired'),
               },
             ]}
           >
-            <Input type='password' placeholder="请输入您的密码"/>
+            <Input type='password' placeholder={t('Login.passwordRequired')}/>
           </Form.Item>
         </div>
         <div className={styles.formBlankItem}></div>
         <div className={styles.formBtnItem}>
           <Button loading={loading} type="primary" htmlType="submit" style={{width:'100%'}}>
-            登录
+            {t('Login.loginButton')}
           </Button>
           <Button onClick={goToSignUp} size="small" className={"success-btn " + styles.subBtn}>
-            去注册
+            {t('Login.goToSignUp')}
           </Button>
         </div>
       </Form>

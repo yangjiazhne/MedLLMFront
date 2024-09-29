@@ -21,6 +21,7 @@ import { Button, Input } from 'antd'
 import LLMIcon from '@/assets/icon.jpg'
 import Draggable from 'react-draggable'
 import { use } from 'i18next'
+import { useTranslation } from 'react-i18next';
 
 const SideLLMChatWindow = ({
   chatHistory,
@@ -48,6 +49,7 @@ const SideLLMChatWindow = ({
   const chatInputObject = createRef()
   const chatListObject = createRef()
   const [inputValue, setInputValue] = useState("");
+  const { t, i18n } = useTranslation()
 
   const chatWindowSize = {
     // 聊天框宽高
@@ -378,26 +380,26 @@ const SideLLMChatWindow = ({
                   <div className={`${styles.infoContainer} ` + 
                     `${floatWindowSide === 'bottom' && !forceVerticalLayout ? styles.horizen : ''}`}>
                     <img src={LLMIcon}/>
-                    <p>
-                      OmniPT V1.0 一款为病理图研发的大模型，作为您的病理诊断分析智能助手，提升病理诊断效率！
+                    <p style={{fontSize: i18n.language === 'en' ? '14px' : 'medium', lineHeight: i18n.language === 'en' ? '18px' : 'auto'}}>
+                     {t('PathoSpace.dialog.introduction')}
                     </p>
                     <div>
                       <div className={styles.featureCards}>
                         <div>
-                          <div>病变识别</div>
-                          <p>肿瘤分级、分型等识别任务</p>
+                          <div style={{fontSize: i18n.language === 'en' ? '14px' : 'large', fontWeight: i18n.language === 'en' ? 600 : 700}}>{t('PathoSpace.dialog.lesionTitle')}</div>
+                          <p style={{fontSize: i18n.language === 'en' ? '14px' : 'medium'}}>{t('PathoSpace.dialog.lesionContent')}</p>
                         </div>
                         <div>
-                          <div>扩散分析</div>
-                          <p>MVI识别、神经侵犯、淋巴转移等</p>
+                          <div style={{fontSize: i18n.language === 'en' ? '14px' : 'large', fontWeight: i18n.language === 'en' ? 600 : 700}}>{t('PathoSpace.dialog.invasionTitle')}</div>
+                          <p style={{fontSize: i18n.language === 'en' ? '14px' : 'medium'}}>{t('PathoSpace.dialog.invasionContent')}</p>
                         </div>
                         <div>
-                          <div>疗效预测</div>
-                          <p>预后、疗效等预测任务</p>
+                          <div style={{fontSize: i18n.language === 'en' ? '14px' : 'large', fontWeight: i18n.language === 'en' ? 600 : 700}}>{t('PathoSpace.dialog.efficacyTitle')}</div>
+                          <p style={{fontSize: i18n.language === 'en' ? '14px' : 'medium'}}>{t('PathoSpace.dialog.efficacyContent')}</p>
                         </div>
                         <div>
-                          <div>基础能力</div>
-                          <p>血管、细胞、组织、腺体等识别</p>
+                          <div style={{fontSize: i18n.language === 'en' ? '14px' : 'large', fontWeight: i18n.language === 'en' ? 600 : 700}}>{t('PathoSpace.dialog.basicTitle')}</div>
+                          <p style={{fontSize: i18n.language === 'en' ? '14px' : 'medium'}}>{t('PathoSpace.dialog.basicContent')}</p>
                         </div>
                       </div>  
                     </div>  {/* END OF CARDS GRID */}
@@ -409,7 +411,7 @@ const SideLLMChatWindow = ({
                         appendChatHistory()
                         setIsClickGetHistory(true)
                        }}>
-                    <Button type="link"><ReloadOutlined style={{color: '#1890ff'}}/>获取历史信息</Button>
+                    <Button type="link"><ReloadOutlined style={{color: '#1890ff'}}/>{t('PathoSpace.dialog.getHistory')}</Button>
                   </div>
                 )}
                 <div className={styles.chatList}>
@@ -434,12 +436,12 @@ const SideLLMChatWindow = ({
                   style={{display: newMessageReminderShow ? 'block' : 'none'}}
                   onClick={onNewMessageClick}
                 >
-                  <CaretDownOutlined /> 收到了新消息
+                  <CaretDownOutlined /> {t('PathoSpace.dialog.newMessage')}
                 </div>
               </div>
               <div className={styles.inputContainer}>
                 <Input.TextArea
-                  placeholder='Type to chat...'
+                  placeholder={t('PathoSpace.dialog.inputText')}
                   type='text'
                   ref={chatInputObject}
                   value={inputValue}

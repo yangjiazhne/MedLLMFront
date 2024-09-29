@@ -8,11 +8,12 @@ import { DeleteOutlined, SmallDashOutlined,AppstoreOutlined,VerticalAlignTopOutl
 // @ts-ignore
 import invalidIcon from '@/assets/invalid.png'
 import { useHistory } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
 const SingleProject = ({ groupDetail, deleteGroup, projectId }) => {
   const history = useHistory()
   const dispatch = useDispatch()
-
+  const { t, i18n } = useTranslation()
   const taskPercent = useMemo(() => {
     if (groupDetail.totalImages === 0) return 0
     return Number(((groupDetail.finishImages / groupDetail.totalImages) * 100).toFixed(2))
@@ -25,10 +26,10 @@ const SingleProject = ({ groupDetail, deleteGroup, projectId }) => {
           overlay={
             <Menu>
               <Menu.Item danger onClick={() => deleteGroup(groupDetail.imageGroupId)}>
-                <DeleteOutlined style={{ color: 'red' }} /> 删除
+                <DeleteOutlined style={{ color: 'red' }} /> {t('GroupHome.singleGroup.delete')}
               </Menu.Item>
               <Menu.Item onClick={() => history.push(`/userHome/project-file/${projectId}?type=Raw`)}>
-                <VerticalAlignTopOutlined style={{ color: '#1890ff' }} /> 上传
+                <VerticalAlignTopOutlined style={{ color: '#1890ff' }} /> {t('GroupHome.singleGroup.upload')}
               </Menu.Item>
             </Menu>
           }
@@ -45,7 +46,7 @@ const SingleProject = ({ groupDetail, deleteGroup, projectId }) => {
       <div className={styles.btnWrap}>
         <Button type="primary" onClick={async()=>{
           if(groupDetail.totalImages===0){
-            message.warning('该分组下暂无数据！');
+            message.warning(t('GroupHome.singleGroup.empty'));
             return
           }
           const projectGroupsRes= await searchGroup(projectId)
@@ -62,7 +63,7 @@ const SingleProject = ({ groupDetail, deleteGroup, projectId }) => {
             `/projects/pathoSpace/${projectId}`
           )
         }}>
-          {'查看'}
+          {t('GroupHome.singleGroup.view')}
         </Button>
       </div>
     </div>

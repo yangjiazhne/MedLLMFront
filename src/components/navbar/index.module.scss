@@ -49,16 +49,18 @@
     justify-content: flex-start;
     color: #fff;
     margin-right: 60px;
+    z-index: 1;
     .navbarMenuItem {
       // border: 5px solid red;
       margin: 0 10px;
       cursor: pointer;
+      font-size: 17px;
 
-      background: rgba(0, 63, 136, 0.73);
+      // background: rgba(0, 63, 136, 0.73);
       padding: 10px;
       border-radius: 10px;
       &:hover {
-        color: #8dbfe6;
+        color: #0d2fe1;
       }
     }
   }

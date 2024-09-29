@@ -9,6 +9,7 @@ import { copyToClip, getStrWithLen } from '@/helpers/Utils'
 import { VButton } from '@/components'
 import { updateGroup,createGroup,deleteGroup,searchGroup} from '@/request/actions/group'
 import { updateImage,createImage,deleteImage,searchImage} from '@/request/actions/image'
+import { useTranslation } from 'react-i18next'
 
 const { TextArea } = Input;
 const CheckboxGroup = Checkbox.Group;
@@ -37,9 +38,9 @@ const HitImage = ({ hitDetail, projectId }) => {
 }
 
 // 新建分组Modal Form
-const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false, editGroup}) => {
+const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, cancelText, isEdit=false, editGroup}) => {
     const [form] = Form.useForm();
-    
+    const { t, i18n } = useTranslation()
     if(isEdit){
         form.setFields([
             { name: 'name', value: editGroup.imageGroupName },
@@ -51,7 +52,7 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
         visible={open}
         title={title}
         okText={okText}
-        cancelText="取消"
+        cancelText={cancelText}
         onCancel={onCancel}
         destroyOnClose
         onOk={() => {
@@ -76,17 +77,17 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
         >
           <Form.Item
             name="name"
-            label="名称"
+            label={t('ProjectDetail.createGroup.name')}
             rules={[
               {
                 required: true,
-                message: '请输入分组名称!',
+                message: t('ProjectDetail.createGroup.nameRequired'),
               },
             ]}
           >
-            <Input showCount placeholder="最大长度为20个字符" maxLength={20}/>
+            <Input showCount placeholder={t('ProjectDetail.createGroup.nameInput')} maxLength={20}/>
           </Form.Item>
-          <Form.Item name="description" label="描述">
+          <Form.Item name="description" label={t('ProjectDetail.createGroup.description')}>
             <TextArea showCount maxLength={100}/>
           </Form.Item>
         </Form>
@@ -96,27 +97,27 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
 
 // 删除分组Modal
 const GroupDeleteForm = ({open, onDelete, onCancel, currentProjectGroups}) => {
-    // 测试用
+    const { t, i18n } = useTranslation()
       const showDeleteConfirm = () => {
         const deleteGroups = currentProjectGroups.filter(group => checkedList.includes(group.imageGroupId));
         confirm({
-          title: '确定删除以下分组?',
+          title: t('ProjectDetail.deleteGroup.content'),
           icon: <ExclamationCircleOutlined />,
           content: (<div>
             {deleteGroups.map((item, index) => (
                 <div key={index}>{item.imageGroupName}</div>
             ))}
           </div>),
-          okText: '确定',
+          okText: t('ProjectDetail.deleteGroup.okText'),
           okType: 'danger',
-          cancelText: '取消',
+          cancelText: t('ProjectDetail.deleteGroup.cancelText'),
           async onOk() {
             const res = await deleteGroup(checkedList)
             onDelete()
             if (!res.err) {
-              message.success('删除成功')
+              message.success(t('ProjectDetail.deleteGroup.success'))
             } else {
-              message.error(res || '删除失败')
+              message.error(res || t('ProjectDetail.deleteGroup.error'))
             }
           }
         });
@@ -137,9 +138,9 @@ const GroupDeleteForm = ({open, onDelete, onCancel, currentProjectGroups}) => {
     return (
       <Modal
         visible={open}
-        title="删除分组"
-        okText="删除选中"
-        cancelText="取消"
+        title={t('ProjectDetail.deleteGroup.ModalTitle')}
+        okText={t('ProjectDetail.deleteGroup.ModalokText')}
+        cancelText={t('ProjectDetail.deleteGroup.ModalCancelText')}
         onCancel={onCancel}
         destroyOnClose
         okButtonProps={{ disabled: checkedList.length === 0 }}
@@ -150,7 +151,7 @@ const GroupDeleteForm = ({open, onDelete, onCancel, currentProjectGroups}) => {
       >
         <div style={{ boxShadow: '0 0 15px #ededed', padding: '10px', borderRadius: '4px' }}>
             <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>
-                全部选中
+                {t('ProjectDetail.deleteGroup.checkAll')}
             </Checkbox>
             <Divider style={{ marginTop: '5px', marginBottom: '5px'}} />
             <div style={{maxHeight: '250px', overflowY: 'auto'}}>
@@ -177,6 +178,7 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
       // @ts-ignore
       state => state.project
     )
+    const { t, i18n } = useTranslation()
     const [checkedList, setCheckedList] = useState([])
     const [indeterminate, setIndeterminate] = useState(false)
     const [checkAll, setCheckAll] = useState(false)
@@ -199,9 +201,9 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
     return (
       <Modal
         visible={open}
-        title="移动图像"
-        okText="移动"
-        cancelText="取消"
+        title={t('ProjectDetail.moveImage.title')}
+        okText={t('ProjectDetail.moveImage.okText')}
+        cancelText={t('ProjectDetail.moveImage.cancelText')}
         onCancel={onCancel}
         destroyOnClose
         okButtonProps={{ disabled: (checkedList.length === 0 || !moveGroup) }}
@@ -213,22 +215,22 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
             }));
             const res = await updateImage(data)
             if (!res.err) {
-              message.success('修改成功')
+              message.success(t('ProjectDetail.moveImage.success'))
               const imageRes = await searchImage(currentGroup.imageGroupId)
               dispatch({
                 type: 'UPDATE_CURRENT_GROUP_IMAGES',
                 payload: imageRes.data.content
               })
             } else {
-              message.error(res || '修改失败')
+              message.error(res || t('ProjectDetail.moveImage.error'))
             }
         }}
       >
         <div style={{ boxShadow: '0 0 15px #ededed', borderRadius: '4px'}}>
         <div style={{ padding: '10px'}}>
-          移动至
+          {t('ProjectDetail.moveImage.moveTo')}
           <Select
-            placeholder="选择一个分组"
+            placeholder={t('ProjectDetail.moveImage.moveInput')}
             style={{ width: 250, marginLeft:'20px' }}
             onChange={handleSelectChange}
             options={options}
@@ -236,7 +238,7 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
         </div>
         <div style={{ padding: '10px'}}>
             <Checkbox indeterminate={indeterminate} onChange={onCheckAllChange} checked={checkAll}>
-                全部选中
+              {t('ProjectDetail.moveImage.checkAll')}
             </Checkbox>
             <Divider style={{ marginTop: '5px', marginBottom: '5px'}} />
             <div style={{maxHeight: '250px', overflowY: 'auto', width: '100%'}}>
@@ -282,7 +284,7 @@ const DataList = ({setUploadImg}) => {
       )
     const dispatch = useDispatch()
     const history = useHistory()
-
+    const { t, i18n } = useTranslation()
     // @ts-ignore
     let { projectId } = useParams()
 
@@ -312,7 +314,6 @@ const DataList = ({setUploadImg}) => {
         type: 'UPDATE_CURRENT_GROUP_IMAGES',
         payload: imageRes.data.content
       })
-
     }
 
     return(
@@ -324,7 +325,7 @@ const DataList = ({setUploadImg}) => {
                         {/* 编辑分组 */}
                         <div className={styles.groupHeader}>
                             <div style={{ color: 'rgba(0, 0, 0, 0.85)', fontWeight: 'bold', fontSize: '16px' }}>
-                                分组信息
+                                {t('ProjectDetail.groupDetail.name')}
                             </div>
                             <div style={{ marginLeft: 'auto' }}>
                                  <VButton
@@ -333,14 +334,14 @@ const DataList = ({setUploadImg}) => {
                                     icon={<FormOutlined style={{ color: 'white' }} />}
                                     onClick={()=>{setIsDeleteGroupModalOpen(true)}}
                                 >
-                                    删除
+                                    {t('ProjectDetail.groupDetail.delete')}
                                 </VButton>
                                 <VButton
                                     color="#13c2c2"
                                     icon={<PlusSquareOutlined style={{ color: 'white' }} />}
                                     onClick={()=>{setIsAddGroupModalOpen(true)}}
                                 >
-                                    新增
+                                    {t('ProjectDetail.groupDetail.add')}
                                 </VButton>
                             </div>
                             <GroupDeleteForm
@@ -361,8 +362,8 @@ const DataList = ({setUploadImg}) => {
                                   );
                                   if(matchingGroup){
                                     Modal.error({
-                                      title: '该分组名称已存在！',
-                                      content: '请更换一个分组名称',
+                                      title: t('ProjectDetail.createGroup.groupExistTitle'),
+                                      content: t('ProjectDetail.createGroup.groupExistContent'),
                                     });
                                     return
                                   }
@@ -377,18 +378,19 @@ const DataList = ({setUploadImg}) => {
                                   })
                                   setIsAddGroupModalOpen(false);
                                   if (!res.err) {
-                                    message.success('创建成功')
+                                    message.success(t('ProjectDetail.createGroup.success'))
                                     const projectGroupsRes= await searchGroup(projectId)
                                     dispatch({
                                       type: 'UPDATE_CURRENT_PROJECT_GROUPS',
                                       payload: projectGroupsRes.data.content,
                                     })
                                   } else {
-                                    message.error(res || '创建失败')
+                                    message.error(res || t('ProjectDetail.createGroup.error'))
                                   }
                                 }}
-                                title={"新建分组"}
-                                okText={"创建"}
+                                title={t('ProjectDetail.createGroup.title')}
+                                okText={t('ProjectDetail.createGroup.submit')}
+                                cancelText={t('ProjectDetail.createGroup.back')}
                                 onCancel={()=>{setIsAddGroupModalOpen(false)}}
                                 isEdit={false}
                             />
@@ -427,8 +429,8 @@ const DataList = ({setUploadImg}) => {
                                     );
                                     if(matchingGroup && matchingGroup.imageGroupId!==editGroup.imageGroupId){
                                       Modal.error({
-                                        title: '该分组名称已存在！',
-                                        content: '请更换一个分组名称',
+                                        title: t('ProjectDetail.editGroup.groupExistTitle'),
+                                        content: t('ProjectDetail.editGroup.groupExistContent'),
                                       });
                                       return
                                     }
@@ -440,7 +442,7 @@ const DataList = ({setUploadImg}) => {
                                       }]})
                                     setIsEditGroupModalOpen(false);
                                     if (!res.err) {
-                                      message.success('修改成功')
+                                      message.success(t('ProjectDetail.editGroup.success'))
                                       // 获取项目所有的组
                                       const projectGroupsRes= await searchGroup(projectId)
                                       dispatch({
@@ -453,12 +455,13 @@ const DataList = ({setUploadImg}) => {
                                         payload: gp,
                                       })
                                     } else {
-                                      message.error(res || '修改失败')
+                                      message.error(res || t('ProjectDetail.editGroup.error'))
                                     }
                                   }}
                                 onCancel={()=>{setIsEditGroupModalOpen(false)}}
-                                title={"编辑组信息"}
-                                okText={"完成"}
+                                title={t('ProjectDetail.editGroup.title')}
+                                okText={t('ProjectDetail.editGroup.submit')}
+                                cancelText={t('ProjectDetail.editGroup.back')}
                                 isEdit={true}
                                 editGroup={editGroup}
                             />
@@ -472,7 +475,7 @@ const DataList = ({setUploadImg}) => {
                         {/* 图像上传 */}
                         <div className={styles.dataHeader}>
                             <div style={{ color: 'rgba(0, 0, 0, 0.85)', fontWeight: 'bold', fontSize: '16px' }}>
-                                数据列表
+                                {t('ProjectDetail.imageDetail.name')}
                             </div>
                             <div style={{ marginLeft: 'auto' }}>
                                 <VButton
@@ -481,14 +484,14 @@ const DataList = ({setUploadImg}) => {
                                     icon={<ExportOutlined style={{ color: 'white' }} />}
                                     onClick={()=>{setIsMoveImgModalOpen(true)}}
                                 >
-                                    移动
+                                    {t('ProjectDetail.imageDetail.move')}
                                 </VButton>
                                 <VButton
                                     color="#52c41a"
                                     icon={<PlusSquareOutlined style={{ color: 'white' }} />}
                                     onClick={() => history.push(`/userHome/project-file/${projectId}?type=Raw`)}
                                 >
-                                    上传
+                                    {t('ProjectDetail.imageDetail.upload')}
                                 </VButton>
                             </div>
                             <ImgMoveForm 
@@ -513,7 +516,7 @@ const DataList = ({setUploadImg}) => {
                             ):(
                               <Empty
                                 style={{ marginTop: '50px' }}
-                                description={<h2 className={styles.noItems}>数据列表为空</h2>}
+                                description={<h2 className={styles.noItems}>{t('ProjectDetail.imageDetail.empty')}</h2>}
                               >
                               </Empty>
                             )}

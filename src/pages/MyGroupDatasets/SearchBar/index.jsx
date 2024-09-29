@@ -21,7 +21,7 @@ const SearchBar = ({ setKeyWord }) => {
         <div className={styles.SearchBarDiv}>
             <input type="text"
                    value={key}
-                   placeholder={t('keyword')}
+                   placeholder={t('GroupHome.searchBar')}
                    onChange={e => setKey(e.target.value)}
                    onKeyUp={allSearch}
                    className={styles.input}/>

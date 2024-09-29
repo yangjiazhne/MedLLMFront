@@ -17,6 +17,7 @@ import {
   RightOutlined
 } from "@ant-design/icons";
 import Draggable from "react-draggable";
+import { useTranslation } from 'react-i18next';
 
 const ResultListWindow = ({
                             btnList,
@@ -29,6 +30,7 @@ const ResultListWindow = ({
     // @ts-ignore
     state => state.project
   )
+  const { t, i18n } = useTranslation()
   const [minimizeStatus, setMinimizeStatus] = useState(false)
   const [lastDragMouseStatus, setLastDragMouseStatus] = useState({x: null, y: null})
   const [taskButton, setTaskButton] = useState([])
@@ -125,7 +127,7 @@ const ResultListWindow = ({
           <div className={`${styles.viewerResultBG}`} style={setYPosition()}>
             <div className={styles.viewerResultList}>
               <div className={styles.viewerPredictResultContainer}>
-                <p>预推理结果</p>
+                <p style={{fontSize: i18n.language === 'en' ? '14px' : 'auto'}}>{t('PathoSpace.preInferResult.predictedResults')}</p>
                 <div className={styles.btnGroup}>
                   {
                     taskButton.map((item, index) => (
@@ -137,14 +139,14 @@ const ResultListWindow = ({
                         onClick={(e) => beforeBtnClick(item)}
                         key={index}
                       >
-                        {item.llmTaskTypeName}
+                        {t(item.llmTaskTypeName)}
                       </VButton>
                     ))
                   }
                 </div>
               </div>
               <VButton className={styles.viewerPredictResultToReportBtn} onClick={() => beforeBtnClick(null, 'summary')}>
-                病理报告一键生成
+              {t('PathoSpace.preInferResult.report')}
               </VButton>
             </div>
           </div>

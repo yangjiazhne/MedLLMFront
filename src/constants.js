@@ -11,13 +11,13 @@ export const VISIBILITY_FILTERS = {
 }
 
 let serverAddress
-serverAddress = 'http://10.214.211.212'
+serverAddress = 'http://10.214.211.135'
 
 // 前后端服务器地址请在这里修改
-export const imgUploadPre = `${serverAddress}:3030`
+export const imgUploadPre = `${serverAddress}:3033`
 // java服务端地址
 export const SERVER_HOST = `${serverAddress}:3033`
-export const SERVER_WS = 'ws://10.214.211.212:9090/'
+export const SERVER_WS = 'ws://10.214.211.209:8082/'
 
 export const BASE_URL = SERVER_HOST + '/api'
 export const STATIC_URL = SERVER_HOST + '/uploads'
@@ -36,13 +36,13 @@ export const hitShapeTypes = {
 }
 
 export const hitShapeTypeLabels = {
-    [hitShapeTypes.POINT]: '点',
-    [hitShapeTypes.CIRCLE]: '圆',
-    [hitShapeTypes.ELLIPSE]: '椭圆',
-    [hitShapeTypes.RECT]: '矩形',
-    [hitShapeTypes.POLYGON]: '多边形',
-    [hitShapeTypes.POLYGONPATH]: '自由路径',
-    [hitShapeTypes.PATH]: '路径',
+    [hitShapeTypes.POINT]: 'PathoSpace.tagList.point',
+    [hitShapeTypes.CIRCLE]: 'PathoSpace.tagList.circle',
+    [hitShapeTypes.ELLIPSE]: 'PathoSpace.tagList.ellipse',
+    [hitShapeTypes.RECT]: 'PathoSpace.tagList.rect',
+    [hitShapeTypes.POLYGON]: 'PathoSpace.tagList.polygon',
+    [hitShapeTypes.POLYGONPATH]: 'PathoSpace.tagList.path',
+    [hitShapeTypes.PATH]: 'PathoSpace.tagList.path',
     [hitShapeTypes.NONE]: '无' // 拖拽状态
 };
 

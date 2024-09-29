@@ -18,6 +18,7 @@ import { searchGroup } from '@/request/actions/group'
 import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
 import { logOut } from '@/helpers/Utils'
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
+import { useTranslation } from 'react-i18next'
 const ProjectOverview = () => {
   const dispatch = useDispatch()
   const history = useHistory()
@@ -33,24 +34,24 @@ const ProjectOverview = () => {
 
   // @ts-ignore
   let { projectId } = useParams()
-
+  const { t, i18n } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [uploadImg, setUploadImg] = useState(0)
 
   const deleteProjectModal = () => {
     Modal.confirm({
-      title: '确认',
+      title: t('ProjectDetail.deleteProject.title'),
       icon: <ExclamationCircleOutlined />,
-      content: '确定要删除该数据集吗？',
-      okText: '确认',
-      cancelText: '取消',
+      content: t('ProjectDetail.deleteProject.content'),
+      okText: t('ProjectDetail.deleteProject.okText'),
+      cancelText: t('ProjectDetail.deleteProject.cancelText'),
       onOk: async () => {
         const res = await deleteProject(projectId)
         if (!res.err) {
-          message.success('数据集删除成功')
+          message.success(t('ProjectDetail.deleteProject.success'),)
           history.push('/userHome/my-projects')
         } else {
-          message.error(res?.data || '删除失败')
+          message.error(res?.data || t('ProjectDetail.deleteProject.error'),)
         }
       },
     })
@@ -60,13 +61,14 @@ const ProjectOverview = () => {
     const currentProjectPid = projectId
     localStorage.setItem('currentProject', currentProjectPid)
 
+    setLoading(true)
     // 获取项目详情
     const projectRes = await searchProject(projectId = currentProjectPid)
 
     if(projectRes.err){
       Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
+        title: t('LoginExpired.title'),
+        content: t('LoginExpired.content'),
         onOk: () => logOut(history),
       })
     }
@@ -109,7 +111,7 @@ const ProjectOverview = () => {
         <Header currentGroupImages={currentGroupImages} />
         <Descriptions
           bordered
-          title={'数据集详情'}
+          title={t('ProjectDetail.detailTable.name')}
           className={styles.container}
           extra={
             <div>
@@ -118,7 +120,7 @@ const ProjectOverview = () => {
                 icon={<FormOutlined style={{ color: 'white' }} />}
                 onClick={() => history.push(`/userHome/import?id=${projectDetails.projectId}`)}
               >
-                {'编辑'}
+                {t('ProjectDetail.detailTable.edit')}
               </VButton>
               <Button
                 style={{ borderColor: 'red', borderRadius: '5px', margin: '0px 5px 0px 5px' }}
@@ -126,7 +128,7 @@ const ProjectOverview = () => {
                 onClick={deleteProjectModal}
                 danger
               >
-                {'删除'}
+                {t('ProjectDetail.detailTable.delete')}
               </Button>
               {/* <Dropdown
                 overlay={() => (
@@ -154,7 +156,7 @@ const ProjectOverview = () => {
           }
         >
           {renderProjectDetail(projectDetails).map((item, index) => (
-            <Descriptions.Item key={index} label={item.label} span={item.span}>
+            <Descriptions.Item key={index} label={t(item.label)} span={item.span}>
               {item.value}
             </Descriptions.Item>
           ))}

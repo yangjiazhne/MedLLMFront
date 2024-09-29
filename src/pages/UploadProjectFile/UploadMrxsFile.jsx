@@ -10,6 +10,7 @@ const { TabPane } = Tabs
 const { Dragger } = Upload
 import { searchGroup} from '@/request/actions/group'
 import { logOut } from '@/helpers/Utils'
+import { useTranslation } from 'react-i18next'
 
 const UploadMrxsFile = ({ handleUploadDone }) => {
   const [form] = Form.useForm()
@@ -22,15 +23,15 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
   const [options, setOptions] = useState([])
   //@ts-ignore
   let {projectId} = useParams()
-
+  const { t, i18n } = useTranslation()
   // 获取项目所有的组
   const fetchGroup = async() => {
     const projectGroupsRes= await searchGroup(projectId)
 
     if(projectGroupsRes.err){
       Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
+        title: t('LoginExpired.title'),
+        content: t('LoginExpired.content'),
         onOk: () => logOut(history),
       })
     }
@@ -89,7 +90,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         const total = lines.length
         if (total < 1) {
           Modal.error({
-            content: '输入的txt文件中无有效地址',
+            content: t('ProjectDetail.uploadData.success'),
           })
           setUploading(false)
           return 0
@@ -103,7 +104,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         if (res.err) setErrorMsg(res.data)
         else {
           Modal.success({
-            content: '数据上传成功,正在执行转化任务',
+            content: t('ProjectDetail.uploadData.failed'),
             onOk: () => {
               history.push('/userHome/projects/' + projectId.toString())
             },
@@ -114,7 +115,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
 
   return (
     <div style={{ textAlign: 'center', width: '80%', margin: 'auto' }}>
-      <h3 style={{ margin: '20px 0' }}> 上传病理图数据 </h3>
+      <h3 style={{ margin: '20px 0' }}> {t('ProjectDetail.uploadData.title')} </h3>
       <Tabs
         defaultActiveKey="images"
         onChange={key => {
@@ -122,7 +123,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
           setUploadProcess(0)
         }}
       >
-        <TabPane  tab="txt文本文件" key="txt" disabled={uploading}>
+        <TabPane  tab={t('ProjectDetail.uploadData.tab')} key="txt" disabled={uploading}>
           <div style={{ margin: '20px auto', width: '500px', textAlign: 'left' }}>
               <Form
                 form={form}
@@ -132,12 +133,12 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
                 onFinish={handleSubmit}
               >
                 <Form.Item
-                  label="分组名称"
+                  label={t('ProjectDetail.uploadData.name')}
                   name="group"
                   rules={[
                     {
                       required: true,
-                      message: '必须选择分组',
+                      message: t('ProjectDetail.uploadData.nameRequired'),
                     },
                   ]}
                 >
@@ -148,7 +149,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
                 </Form.Item>
                 <div style={{ marginBottom: '15px' }}>
                   <p style={{ opacity: '0.7', fontSize: '14px' }}>
-                    请上传文本文件, 根据行数生成项目个数, 文本文件的每行为图片所在文件夹的绝对路径
+                    {t('ProjectDetail.uploadData.uploadDesc')}
                   </p>
                   <Dragger
                     beforeUpload={beforeUpload}
@@ -159,7 +160,7 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
                     <p className="ant-upload-drag-icon">
                       <UploadOutlined />
                     </p>
-                    <p className="ant-upload-text">点击或拖拽文件到此区域</p>
+                    <p className="ant-upload-text">{t('ProjectDetail.uploadData.upload')}</p>
                   </Dragger>
                 </div>
               </Form>
@@ -167,13 +168,13 @@ const UploadMrxsFile = ({ handleUploadDone }) => {
         </TabPane>
       </Tabs>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin tip={"文件正在解析到数据库"} style={{margin: '20px auto'}} spinning={uploading}>
+        <Spin tip={t('ProjectDetail.uploadData.parse')} style={{margin: '20px auto'}} spinning={uploading}>
           <Button type="default" onClick={() => history.push('/userHome/projects/' + projectId.toString())} disabled={uploading}
               style={{marginRight:'40px'}}>
-            返回
+            {t('ProjectDetail.uploadData.back')}
           </Button>
           <Button type="primary" onClick={() => form.submit()} disabled={uploading}>
-            提交
+            {t('ProjectDetail.uploadData.submit')}
           </Button>
         </Spin>
       </div>

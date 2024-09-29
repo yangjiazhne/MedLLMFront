@@ -11,6 +11,7 @@ import { searchImage, fetchImageTileInfo } from '@/request/actions/image'
 import { imgError } from './config'
 const { Search } = Input;
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
+import { useTranslation } from 'react-i18next';
 
 const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPage, setCurrentPageSize, setHistoryChat, setLLMChatHistory, setIsClickGetHistory, setNewMessageReminderShow}) => {
     const {
@@ -23,6 +24,7 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
         // @ts-ignore
         state => state.project
       )
+    const { t } = useTranslation()
     const dispatch = useDispatch()
     // @ts-ignore
     let { projectId } = useParams()
@@ -140,11 +142,11 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                 <div className={styles.sliceListContainer} ref={draggleRef}>
                     <div className={styles.innerContainer}>
                         <div className={styles.sliceListHeader}>
-                            <p className={styles.sliceListTitle}>切片列表</p>
+                            <p className={styles.sliceListTitle}>{t('PathoSpace.sliceList.sliceList')}</p>
                             <CloseOutlined onClick={()=>{setShowSliceList(false)}} style={{ fontSize: '20px' }}/>
                         </div>
                         <Search
-                            placeholder="搜索分组"
+                            placeholder={t('PathoSpace.sliceList.search')}
                             onSearch={onSearch}
                             className={styles.SearchBar}
                             style={{
@@ -187,7 +189,7 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                         <Divider style={{ marginTop: '10px', marginBottom: '10px', backgroundColor: '#354052' }} />
                         <div className={styles.sliceListFoot}>
                             <Button disabled={currentPage===1} className={styles.disabledButton} onClick={()=>{setCurrentPage(currentPage-1)}}>
-                                上一页
+                                {t('PathoSpace.sliceList.previous')}
                             </Button>
                             <div><InputNumber min={1} max={currentGroupLength} 
                                               className={styles.inputNumberControl}
@@ -198,7 +200,7 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                                               bordered={false} size='small'/>
                                 / {currentGroupLength}</div>
                             <Button disabled={currentPage===currentGroupLength} className={styles.disabledButton}  onClick={()=>{setCurrentPage(currentPage+1)}}>
-                                下一页
+                                {t('PathoSpace.sliceList.next')}
                             </Button>
                         </div>
                     </div>

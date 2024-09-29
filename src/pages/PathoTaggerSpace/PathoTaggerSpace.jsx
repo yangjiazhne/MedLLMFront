@@ -13,19 +13,21 @@ import { searchProject } from '@/request/actions/project'
 import { searchSession } from '@/request/actions/session'
 import { liveQA, searchLLMTaskType } from '@/request/actions/task'
 import { SERVER_WS } from '@/constants'
-import { getCurrentResult } from './help'
+import { getCurrentResult, renderModelInfer, convertCoord } from './help'
 import styles from './PathoTaggerSpace.module.scss'
-import { RightBar, CanvasAnnotator, SliceList, SideLLMChatWindow, ResultListWindow } from './components'
+import { RightBar, CanvasAnnotator, SliceList, SideLLMChatWindow, ResultListWindow, DraggableWindow } from './components'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { Stomp, Client } from '@stomp/stompjs';
 import { getToken } from '@/helpers/dthelper'
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 import { logOut } from '@/helpers/Utils'
+import { useTranslation } from 'react-i18next';
 
 const PathoTaggerSpace = () => {
   let queryInfo = useQuery()
   const dispatch = useDispatch()
   let history = useHistory()
+  const { t, i18n } = useTranslation()
   const {
     projectDetails, //项目详情
     currentGroupImages,
@@ -64,6 +66,13 @@ const PathoTaggerSpace = () => {
   const [currentPageSize, setCurrentPageSize] = useState(8)   //每页显示数据集个数
 
   const [progress, setProgress] = useState(0);  //数据集转化进度
+
+  // 从 localStorage 加载保存的语言设置
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') || 'zh'; // 默认语言为中文
+    console.log(savedLanguage)
+    i18n.changeLanguage(savedLanguage);
+  }, [i18n]);
 
   //获取所有需要的项目信息
   const fetchData = async () => {
@@ -190,9 +199,35 @@ const PathoTaggerSpace = () => {
       
       // 获取任务列表
       const taskList = await searchLLMTaskType()
+      const updatedTasks = taskList.data.map(task => {
+        switch (task.llmTaskTypeId) {
+            case 2:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.lesion"
+                break;
+            case 3:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.vascular"
+                break;
+            case 4:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.neural"
+                break;
+            case 5:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.lymphatic"
+                break;
+            case 6:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.hepatic"
+                break;
+            case 7:
+                task.llmTaskTypeName = "PathoSpace.preInferResult.cell"
+                break;
+            default:
+                // 保持原值不变
+                break;
+        }
+        return task;
+    });
       dispatch({
         type: 'UPDATE_CURRENT_LLM_TASK_TYPE',
-        payload: taskList.data
+        payload: updatedTasks
       })
 
       if(defaultGroupInfo){
@@ -266,7 +301,7 @@ const PathoTaggerSpace = () => {
 
       let subscription;
       
-      const taskId = `medllm_pathology_image_convert_${currentImage.imageId}`
+      const taskId = `medllm_dev_pathology_image_convert_${currentImage.imageId}`
 
       // 连接到 WebSocket 服务器
       stompClient.connect({}, frame => {
@@ -445,11 +480,45 @@ const PathoTaggerSpace = () => {
   const fetchLLmAnswer = async (content) => {
     setIsQuestion(false)
     setIsWaitAnswer(true)
-    const res = await liveQA({
-      "llmTaskTypeId": 1,
-      "imageId": currentImage.imageId,
-      "question": content
-    })
+
+    const activeObject = currentCanvas.getActiveObject()
+
+    let res;
+    let width, height, top, left;
+
+    if(activeObject){
+      const scale = pathoImgInfo.size.width / 1000
+
+      width = activeObject.width * scale
+      height = activeObject.height * scale
+      top = activeObject.top * scale
+      left = activeObject.left * scale
+
+      res = await liveQA({
+        "llmTaskTypeId": 1,
+        "imageId": currentImage.imageId,
+        "question": content,
+        "x": left,
+        "y": top,
+        "width": width,
+        "height": height
+      })
+    }else{
+      width = pathoImgInfo.size.width
+      height = pathoImgInfo.size.height
+      top = 0
+      left = 0
+      res = await liveQA({
+        "llmTaskTypeId": 1,
+        "imageId": currentImage.imageId,
+        "question": content
+      })
+    }
+
+    // const inferRes = convertCoord(width, height, top, left, res, scale)
+
+    // renderModelInfer(inferRes)
+
     setIsWaitAnswer(false)
     appendChatContent(res.data, "assistant")
   }
@@ -503,9 +572,9 @@ const PathoTaggerSpace = () => {
       type: 'UPDATE_CURRENT_QUESTION',
       payload: content
     })
-    isDrawRegion(content)
-
+    // isDrawRegion(content)
     appendChatContent(content)
+    fetchLLmAnswer(content)
   }
 
   const onMessageClick = function (message) {
@@ -544,30 +613,6 @@ const PathoTaggerSpace = () => {
         type: 'primary',
         text: '分级：xxx&xx分期'
       }, 
-      // {
-      //   type: 'warning',
-      //   text: '分型：粗粱型&xxx'
-      // }, {
-      //   type: 'base',
-      //   text: 'MVI：10个'
-      // }, {
-      //   type: 'base',
-      //   text: '预后：5年生存期',
-      //   borderColor: 'green'
-      // },{
-      //   type: 'primary',
-      //   text: '分级：xxx&xx分期'
-      // }, {
-      //   type: 'warning',
-      //   text: '分型：粗粱型&xxx'
-      // }, {
-      //   type: 'base',
-      //   text: 'MVI：10个'
-      // }, {
-      //   type: 'base',
-      //   text: '预后：5年生存期',
-      //   borderColor: 'green'
-      // },
     ])
   }, []);
 
@@ -605,7 +650,21 @@ const PathoTaggerSpace = () => {
                   <ResultListWindow btnList={resultBtnList} onBtnClick={onBtnClick}/>
                 )}
                 {(currentImage?.status === 2 || currentImage?.status === 3) && (
-                  <SideLLMChatWindow
+                  <>
+                    <SideLLMChatWindow
+                        chatHistory={LLMChatHistory}
+                        onMessageSend={onMessageCallback}
+                        onMessageClick={onMessageClick}
+                        historyChat={historyChat}
+                        appendChatHistory={appendChatHistory}
+                        isClickGetHistory={isClickGetHistory}
+                        setIsClickGetHistory={setIsClickGetHistory}
+                        newMessageReminderShow={newMessageReminderShow}
+                        setNewMessageReminderShow={setNewMessageReminderShow}
+                        isWaitAnswer={isWaitAnswer}
+                    >
+                    </SideLLMChatWindow>
+                    {/* <DraggableWindow
                       chatHistory={LLMChatHistory}
                       onMessageSend={onMessageCallback}
                       onMessageClick={onMessageClick}
@@ -616,14 +675,15 @@ const PathoTaggerSpace = () => {
                       newMessageReminderShow={newMessageReminderShow}
                       setNewMessageReminderShow={setNewMessageReminderShow}
                       isWaitAnswer={isWaitAnswer}
-                  >
-                  </SideLLMChatWindow>
+                    >
+                    </DraggableWindow> */}
+                  </>
                 )}
           </div>)}
           {!currentImage && (
               <div style={{width: '100%', height: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                <Empty description={ <span>当前分组下暂无数据</span>} imageStyle={{height: 200, width:400}}>
-                  <Button type="primary" onClick={()=>{setShowSliceList(true)}}>切换分组</Button>
+                <Empty description={ <span>{t('PathoSpace.emptyText')}</span>} imageStyle={{height: 200, width:400}}>
+                  <Button type="primary" onClick={()=>{setShowSliceList(true)}}>{t('PathoSpace.changeGroup')}</Button>
                 </Empty>
               </div>
             )}
@@ -636,18 +696,18 @@ const PathoTaggerSpace = () => {
             <>
               <Popover
                   content={<div style={{width: '250px', backgroundColor: '#272b33', padding:'10px', color: '#fff'}}>
-                    <p><b>切片信息 </b></p>
+                    <p><b>{t('PathoSpace.tagInfo.sliceInfo')} </b></p>
                     <Divider style={{ marginTop: '0', marginBottom: '5px', backgroundColor: '#354052' }} />
                     <p style={{ wordWrap: 'break-word', marginBottom: '4px' }}>
-                      <b>文件名: </b>
+                      <b>{t('PathoSpace.tagInfo.FileName')} </b>
                       {currentImage.imageName}
                     </p>
                     <p style={{ marginBottom: '4px' }}>
-                      <b>图片宽高: </b>
+                      <b>{t('PathoSpace.tagInfo.ImageSize')} </b>
                       {pathoImgInfo?.size?.width} x {pathoImgInfo?.size?.height}
                     </p>
                     <p style={{ marginBottom: '4px' }}>
-                      <b>视窗内图片大小: </b>
+                      <b>{t('PathoSpace.tagInfo.WindowSize')} </b>
                       {pathoViewSize.width} x {pathoViewSize.height}
                     </p>
                   </div>}
@@ -659,11 +719,11 @@ const PathoTaggerSpace = () => {
                 >
                   <div className={styles.sliceInfo}>
                     <div onClick={()=>{ if(isQuestion){
-                                           message.warning('提问尚未结束，请框选一个区域！');
+                                           message.warning(t('PathoSpace.chooseArea'));
                                            return
                                         }
                                         setShowSliceInfoBox(!showSliceInfoBox)}} 
-                          title='切片信息' className={styles.sliceInfoButton} 
+                          title={t('PathoSpace.tagInfo.sliceInfo')} className={styles.sliceInfoButton} 
                         style={{backgroundColor: `${showSliceInfoBox ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
                       <VIcon type="icon-binglixinxi" style={{ fontSize: '28px', marginTop:'10px' }}/>
                     </div>
@@ -672,11 +732,11 @@ const PathoTaggerSpace = () => {
               {(currentImage?.status === 2 || currentImage?.status === 3) && (
                 <div className={styles.biaozhu}>
                   <div onClick={()=>{if(isQuestion){
-                                          message.warning('提问尚未结束，请框选一个区域！');
+                                          message.warning(t('PathoSpace.chooseArea'));
                                           return
                                       }
                                     setShowTagBox(!showTagBox)}} 
-                        title='标注' className={styles.biaozhuButton} 
+                        title={t('PathoSpace.tagList.annotation')} className={styles.biaozhuButton} 
                       style={{backgroundColor: `${showTagBox ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
                     <VIcon type="icon-biaozhu" style={{ fontSize: '28px', marginTop:'8px' }}/>
                   </div>
@@ -686,11 +746,11 @@ const PathoTaggerSpace = () => {
           )}
           <div className={styles.sliceList}>
             <div onClick={()=>{if(isQuestion){
-                                    message.warning('提问尚未结束，请框选一个区域！');
+                                    message.warning(t('PathoSpace.chooseArea'));
                                     return
                                 }
                                 setShowSliceList(!showSliceList)}} 
-                  title='切片列表' className={styles.sliceListButton}
+                  title={t('PathoSpace.sliceList.sliceList')} className={styles.sliceListButton}
                 style={{backgroundColor: `${showSliceList ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
               <VIcon type="icon-list" style={{ fontSize: '28px', marginTop:'10px' }}/>
             </div>
@@ -701,19 +761,19 @@ const PathoTaggerSpace = () => {
                   const projectId = localStorage.getItem('currentProject')
                   history.push('/userHome/groups/' + projectId)
                 }}
-                title='返回上一页'
+                title={t('PathoSpace.moreList.returnPrePage')}
                 className={styles.moreListIcon}
                 style={{borderTopLeftRadius: '5px', borderBottomLeftRadius: '5px'}}>
                 <VIcon type="icon-pre" style={{ fontSize: '18px'}}/>
               </div>
               <div onClick={() => history.push('/userHome/my-projects')}
-                  title='返回主界面'
+                  title={t('PathoSpace.moreList.returnHomePage')}
                   className={styles.moreListIcon}>
                 <VIcon type="icon-home" style={{ fontSize: '18px'}}/>
               </div>
               {currentViewer && (
                 <div onClick={() => {currentViewer.setFullScreen(true)}}
-                    title='全屏'
+                    title={t('PathoSpace.moreList.fullScreen')}
                     className={styles.moreListIcon}
                     style={{borderTopRightRadius: '5px', borderBottomRightRadius: '5px'}}>
                   <VIcon type="icon-fullscreen" style={{ fontSize: '18px'}}/>
@@ -728,11 +788,11 @@ const PathoTaggerSpace = () => {
           >
             <div className={styles.moreList}>
               <div onClick={()=>{if(isQuestion){
-                                    message.warning('提问尚未结束，请框选一个区域！');
+                                    message.warning(t('PathoSpace.chooseArea'));
                                     return
                                  }
                             setShowMoreList(!showMoreList)}} 
-                   title='更多功能' className={styles.moreListButton}
+                   title={t('PathoSpace.moreList.moreFeatures')} className={styles.moreListButton}
                   style={{backgroundColor: `${showMoreList ? 'rgba(37, 176, 229, .7)' : 'rgba(40, 49, 66, .6)'}`}}>
                 <VIcon type="icon-more" style={{ fontSize: '28px', marginTop:'10px' }}/>
               </div>
@@ -747,7 +807,7 @@ const PathoTaggerSpace = () => {
       {(currentImage?.status === 0 || currentImage?.status === 1) && (
         <div className={styles.convertProgress}>
           <div style={{color:'#fff', fontWeight:'bold'}}>
-            <span>转化进度：</span>
+            <span>{t('PathoSpace.progress')}</span>
             <Progress percent={progress} style={{width: '400px'}}/>
           </div>
         </div>

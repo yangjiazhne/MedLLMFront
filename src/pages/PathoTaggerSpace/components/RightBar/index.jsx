@@ -22,6 +22,7 @@ import { HexColorPicker } from "react-colorful";
 import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
 import Draggable from 'react-draggable'; 
 const { Option } = Select
+import { useTranslation } from 'react-i18next';
 
 const RightBar = ({ setShowTagBox }) => {
   const {
@@ -36,6 +37,7 @@ const RightBar = ({ setShowTagBox }) => {
     state => state.project
   )
   const dispatch = useDispatch()
+  const { t } = useTranslation()
   const { TextArea } = Input;
   const [customColor, setCustomColor] = useState('#d92bdd');
   const [isCustomColor, setIsCustomColor] = useState(false)
@@ -205,11 +207,11 @@ const RightBar = ({ setShowTagBox }) => {
 
   const deleteActiveObj = () => {
     Modal.confirm({
-      title: '确认',
+      title: t('PathoSpace.deleteAnnotation.title'),
       icon: <ExclamationCircleOutlined />,
-      content: '确定删除该标注吗？',
-      okText: '确认',
-      cancelText: '取消',
+      content: t('PathoSpace.deleteAnnotation.content'),
+      okText: t('PathoSpace.deleteAnnotation.okText'),
+      cancelText: t('PathoSpace.deleteAnnotation.cancelText'),
       onOk: () => {
         currentCanvas.remove(currentActiveObj).requestRenderAll()
         // 维护boundingBoxMap数组
@@ -229,14 +231,14 @@ const RightBar = ({ setShowTagBox }) => {
           <div className={styles.rightBar}  ref={draggleRef}>
             <div className={styles.innerContainer}>
               <div className={styles.tagHeader}>
-                <p className={styles.partTitle}>标注</p>
+                <p className={styles.partTitle}>{t('PathoSpace.tagList.annotation')}</p>
                 <CloseOutlined onClick={()=>{setShowTagBox(false)}} style={{ fontSize: '20px' }}/>
               </div>
               <div className={styles.partContainer}>
                 <div className={styles.tagContainer}>
                   <div className={styles.shapeHeader}>
-                    <p className={styles.shapeTitle}>标注方式</p>
-                    <Checkbox checked={isMutiTag} onChange={onChangeMutiTag} style={{color: isMutiTag ? 'rgb(33, 133, 208)' : 'inherit', fontSize: '12px'}}>多次标注</Checkbox>
+                    <p className={styles.shapeTitle}>{t('PathoSpace.tagList.annotationMethods')}</p>
+                    <Checkbox checked={isMutiTag} onChange={onChangeMutiTag} style={{color: isMutiTag ? 'rgb(33, 133, 208)' : 'inherit', fontSize: '12px'}}>{t('PathoSpace.tagList.MutiAnnotation')}</Checkbox>
                   </div>
                   <div className={styles.iconBtnWrap}>
                     {shapes.map((shape, index) => (
@@ -244,8 +246,8 @@ const RightBar = ({ setShowTagBox }) => {
                         key={index}
                         active={currentShape === shape.value}
                         icon={shape.icon}
-                        label={shape.label}
-                        title={shape.title}
+                        label={t(shape.label)}
+                        title={t(shape.title)}
                         onClick={() => {
                           dispatch({
                             type: 'UPDATE_CURRENT_SHAPE',
@@ -261,7 +263,7 @@ const RightBar = ({ setShowTagBox }) => {
                   </div>
                   <Divider style={{ marginTop: '10px', marginBottom: '0', backgroundColor: '#354052' }} />
                   <div className={styles.selectEntity}>
-                    <p className={styles.subTitle}>选择颜色</p>
+                    <p className={styles.subTitle}>{t('PathoSpace.tagList.chooseColor')}</p>
                     <div className={styles.entityWrap}>
                     {
                       colors.map((item, index) => (
@@ -283,7 +285,7 @@ const RightBar = ({ setShowTagBox }) => {
                         >
                           <span style={{ backgroundColor: item.value, width: '14px', height: '14px', margin: 'auto 10px'}}>
                           </span>
-                          {item.label}
+                          {t(item.label)}
                         </div>
                       ))
                     }
@@ -308,7 +310,7 @@ const RightBar = ({ setShowTagBox }) => {
                               }}>
                             <span style={{ backgroundColor: customColor, width: '14px', height: '14px', margin: 'auto 10px'}}>
                             </span>
-                            自定义
+                            {t('PathoSpace.tagList.custom')}
                         </div>
                       </Popover>
                     </div>
@@ -316,7 +318,7 @@ const RightBar = ({ setShowTagBox }) => {
                 </div>
                 <Divider style={{ marginTop: '10px', marginBottom: '0' }} />
                 <div className={styles.taggerList}>
-                  <p className={styles.taggerListTitle}>标注列表</p>
+                  <p className={styles.taggerListTitle}>{t('PathoSpace.tagList.annotationList')}</p>
                   <ul className={styles.taggerWrap}>
                     {currentCanvas.getObjects().map((annotation, index) => (
                       <li key={annotation.id} className={styles.taggerWrapItem}
@@ -327,7 +329,7 @@ const RightBar = ({ setShowTagBox }) => {
                         <p className={styles.taggerWrapItemContent}>
                           <div>
                             <span style={{marginRight: '20px'}}>{index + 1}</span>
-                            <span>{hitShapeTypeLabels[annotation.shape]}</span>
+                            <span>{t(hitShapeTypeLabels[annotation.shape])}</span>
                           </div>
                           <span className={styles.taggerWrapItemColor} style={{backgroundColor: annotation.color}}></span>
                         </p>
@@ -339,7 +341,7 @@ const RightBar = ({ setShowTagBox }) => {
                           </span>
                           <span className={styles.taggerWrapItemText} onClick={()=>{setIsTagInfModalOpen(true)}}>
                             <VIcon type="icon-wenben" style={{ fontSize: '14px', marginRight:'2px' }}/>
-                            备注
+                            {t('PathoSpace.tagList.remarks')}
                           </span>
                         </p>}
                       </li>
@@ -347,14 +349,14 @@ const RightBar = ({ setShowTagBox }) => {
                   </ul>
                 </div>
               </div>
-              <Modal title="标注信息" 
+              <Modal title={t('PathoSpace.tagList.annotationInfo')}
                     visible={isTagInfoModalOpen} 
                     onOk={handleTagInfoModalOk} 
                     onCancel={()=>{setIsTagInfModalOpen(false)}} 
                     destroyOnClose
-                    okText="保存"
-                    cancelText="取消">
-                <TextArea placeholder="请输入100字以内标注内容" 
+                    okText={t('PathoSpace.tagList.save')}
+                    cancelText={t('PathoSpace.tagList.cancel')}>
+                <TextArea placeholder={t('PathoSpace.tagList.annotationInfoInput')}
                           showCount 
                           maxLength={100} 
                           onChange={handelInfoValueChange}

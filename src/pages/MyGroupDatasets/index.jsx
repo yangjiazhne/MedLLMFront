@@ -16,13 +16,15 @@ import SearchBar from './SearchBar'
 import type { PaginationProps } from 'antd'
 import { ConfigProvider, Pagination } from 'antd'
 import zhCN from 'antd/lib/locale/zh_CN'
+import enUS from 'antd/es/locale/en_US';
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
 const { TextArea } = Input;
+import { useTranslation } from 'react-i18next'
 
 // 新建分组Modal Form
-const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false, editGroup}) => {
+const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, cancelText, isEdit=false, editGroup}) => {
   const [form] = Form.useForm();
-  
+  const { t, i18n } = useTranslation()
   if(isEdit){
       form.setFields([
           { name: 'name', value: editGroup.imageGroupName },
@@ -34,7 +36,7 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
       visible={open}
       title={title}
       okText={okText}
-      cancelText="取消"
+      cancelText={cancelText}
       onCancel={onCancel}
       destroyOnClose
       onOk={() => {
@@ -59,17 +61,17 @@ const GroupCreateForm = ({ open, onCreate, onCancel, title, okText, isEdit=false
       >
         <Form.Item
           name="name"
-          label="名称"
+          label={t('GroupHome.createGroup.name')}
           rules={[
             {
               required: true,
-              message: '请输入分组名称!',
+              message: t('GroupHome.createGroup.nameRequired'),
             },
           ]}
         >
-          <Input showCount placeholder="最大长度为20个字符" maxLength={20}/>
+          <Input showCount placeholder={t('GroupHome.createGroup.nameInput')} maxLength={20}/>
         </Form.Item>
-        <Form.Item name="description" label="描述">
+        <Form.Item name="description" label={t('GroupHome.createGroup.description')}>
           <TextArea showCount maxLength={100}/>
         </Form.Item>
       </Form>
@@ -96,7 +98,7 @@ const MyGroupDatasets = () => {
   const [currentPageSize, setCurrentPageSize] = useState(9)
   //当前模糊搜索关键词
   const [keyword, setKeyWord] = useState('')
-
+  const { t, i18n } = useTranslation()
   const containerRef = useRef(null)
 
   const refreshData = async () => {
@@ -122,8 +124,8 @@ const MyGroupDatasets = () => {
       })
     } else {
       Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
+        title: t('LoginExpired.title'),
+        content: t('LoginExpired.content'),
         onOk: () => logOut(history),
       })
     }
@@ -131,18 +133,18 @@ const MyGroupDatasets = () => {
 
   const deleteGroupModal = groupId => {
     Modal.confirm({
-      title: '确认',
+      title: t('GroupHome.deleteGroup.title'),
       icon: <ExclamationCircleOutlined />,
-      content: '确定要删除该分组吗？',
-      okText: '确认',
-      cancelText: '取消',
+      content: t('GroupHome.deleteGroup.content'),
+      okText: t('GroupHome.deleteGroup.okText'),
+      cancelText: t('GroupHome.deleteGroup.cancelText'),
       onOk: async () => {
         const res = await deleteGroup(groupId)
         if (!res.err) {
-          message.success('分组删除成功')
+          message.success( t('GroupHome.deleteGroup.success'),)
           refreshData()
         } else {
-          message.error(res?.data || '删除失败')
+          message.error(res?.data ||  t('GroupHome.deleteGroup.error'),)
         }
       },
     })
@@ -175,7 +177,7 @@ const MyGroupDatasets = () => {
           </Breadcrumb.Item>
           <Breadcrumb.Item>{'group'}</Breadcrumb.Item>
         </Breadcrumb>
-        <div className={styles.title}>{'分组'}</div>
+        <div className={styles.title}>{t('GroupHome.title')}</div>
         <div style={{ width: '5px' }} />
         <VButton
           size="small"
@@ -183,7 +185,7 @@ const MyGroupDatasets = () => {
           onClick={()=>{setIsAddGroupModalOpen(true)}}
           icon={<PlusOutlined />}
         >
-          {'新建'}
+          {t('GroupHome.newProject')}
         </VButton>
         <GroupCreateForm 
           open={isAddGroupModalOpen}
@@ -196,8 +198,8 @@ const MyGroupDatasets = () => {
             );
             if(matchingGroup){
               Modal.error({
-                title: '该分组名称已存在！',
-                content: '请更换一个分组名称',
+                title: t('GroupHome.createGroup.groupExistTitle'),
+                content: t('GroupHome.createGroup.groupExistContent'),
               });
               return
             }
@@ -212,14 +214,15 @@ const MyGroupDatasets = () => {
             })
             setIsAddGroupModalOpen(false);
             if (!res.err) {
-              message.success('创建成功')
+              message.success(t('GroupHome.createGroup.success'))
               refreshData()
             } else {
-              message.error(res || '创建失败')
+              message.error(res || t('GroupHome.createGroup.error'))
             }
           }}
-          title={"新建分组"}
-          okText={"创建"}
+          title={t('GroupHome.title')}
+          okText={t('GroupHome.createGroup.submit')}
+          cancelText={t('GroupHome.createGroup.back')}
           onCancel={()=>{setIsAddGroupModalOpen(false)}}
           isEdit={false}
       />
@@ -245,7 +248,7 @@ const MyGroupDatasets = () => {
           {currentUserGroups.map((group, index) => (
             <SingleGroup key={index} deleteGroup={deleteGroupModal} groupDetail={group} projectId={projectId}/>
           ))}
-          <ConfigProvider locale={zhCN}>
+          <ConfigProvider locale={i18n.language === 'en' ? enUS : zhCN}>
             <Pagination
               current={currentPage}
               showQuickJumper
@@ -271,10 +274,10 @@ const MyGroupDatasets = () => {
       ) : (
         <Empty
           style={{ marginTop: '50px' }}
-          description={<h2 className={styles.noItems}>分组列表为空</h2>}
+          description={<h2 className={styles.noItems}> {t('GroupHome.empty')}</h2>}
         >
           <Button type="primary" onClick={() => history.push('/userHome/import')}>
-            请创建一个分组
+            {t('GroupHome.createButton')}
           </Button>
         </Empty>
       )}

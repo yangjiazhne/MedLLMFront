@@ -17,7 +17,9 @@ import SearchBar from './SearchBar'
 import type { PaginationProps } from 'antd'
 import { ConfigProvider, Pagination } from 'antd'
 import zhCN from 'antd/lib/locale/zh_CN'
+import enUS from 'antd/es/locale/en_US';
 import useDidUpdateEffect from '@/hooks/useDidUpdateEffect'
+import { useTranslation } from 'react-i18next'
 
 const MyProjects = () => {
   const dispatch = useDispatch()
@@ -28,6 +30,7 @@ const MyProjects = () => {
     state => state.user
   )
 
+  const { t, i18n } = useTranslation()
   const [loading, setLoading] = useState(false)
 
   //控制当前页数
@@ -62,8 +65,8 @@ const MyProjects = () => {
       })
     } else {
       Modal.error({
-        title: '提示',
-        content: '您的登录已过期，请重新登陆',
+        title: t('LoginExpired.title'),
+        content: t('LoginExpired.content'),
         onOk: () => logOut(history),
       })
     }
@@ -71,18 +74,18 @@ const MyProjects = () => {
 
   const deleteProjectModal = projectId => {
     Modal.confirm({
-      title: '确认',
+      title: t('ProjectHome.deleteProject.title'),
       icon: <ExclamationCircleOutlined />,
-      content: '确定要删除该数据集吗？',
-      okText: '确认',
-      cancelText: '取消',
+      content: t('ProjectHome.deleteProject.content'),
+      okText: t('ProjectHome.deleteProject.okText'),
+      cancelText: t('ProjectHome.deleteProject.cancelText'),
       onOk: async () => {
         const res = await deleteProject(projectId)
         if (!res.err) {
-          message.success('数据集删除成功')
+          message.success(t('ProjectHome.deleteProject.success'))
           refreshData()
         } else {
-          message.error(res?.data || '删除失败')
+          message.error(res?.data || t('ProjectHome.deleteProject.error'))
         }
       },
     })
@@ -105,7 +108,7 @@ const MyProjects = () => {
   return (
     <Spin spinning={loading}>
       <div className={styles.titleWrap}>
-        <div className={styles.title}>{'数据集'}</div>
+        <div className={styles.title}>{t('ProjectHome.title')}</div>
         <div style={{ width: '5px' }} />
         <VButton
           size="small"
@@ -113,7 +116,7 @@ const MyProjects = () => {
           onClick={() => history.push('/userHome/import')}
           icon={<PlusOutlined />}
         >
-          {'新建'}
+          {t('ProjectHome.newProjecrt')}
         </VButton>
       </div>
       <div style={{ width: '95%', display: 'flex' }}>
@@ -137,7 +140,7 @@ const MyProjects = () => {
           {currentUserProjects.map((project, index) => (
             <SingleProject key={index} deleteProject={deleteProjectModal} projectDetails={project} />
           ))}
-          <ConfigProvider locale={zhCN}>
+          <ConfigProvider locale={i18n.language === 'en' ? enUS : zhCN}>
             <Pagination
               current={currentPage}
               showQuickJumper
@@ -163,10 +166,10 @@ const MyProjects = () => {
       ) : (
         <Empty
           style={{ marginTop: '50px' }}
-          description={<h2 className={styles.noItems}>数据集列表为空</h2>}
+          description={<h2 className={styles.noItems}>{t('ProjectHome.empty')}</h2>}
         >
           <Button type="primary" onClick={() => history.push('/userHome/import')}>
-            请创建一个数据集
+            {t('ProjectHome.createButton')}
           </Button>
         </Empty>
       )}

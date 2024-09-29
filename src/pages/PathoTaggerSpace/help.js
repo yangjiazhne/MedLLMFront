@@ -120,7 +120,6 @@ export const renderModelInfer = (inferRes) => {
     if (!box) {
       return
     }
-    box.label = box.label || []
 
     const id = box.id
     switch (box.type) {
@@ -135,6 +134,7 @@ export const renderModelInfer = (inferRes) => {
           height: box.height,
           fill: false,
           strokeWidth: strokeWidth,
+          stroke: '#9acd32',
           // opacity: 0.4,
           opacity: 1,
           erasable: false,
@@ -150,6 +150,7 @@ export const renderModelInfer = (inferRes) => {
           id: id || Date.now(),
           shape: hitShapeTypes.POLYGON,
           strokeWidth: strokeWidth,
+          stroke: '#9acd32',
           fill: false,
           opacity: 1,
           erasable: false,
@@ -163,4 +164,24 @@ export const renderModelInfer = (inferRes) => {
       }
     }
   })
+}
+
+function mapObject(obj, scale, top, left, fabricScale) {
+  if (obj.type === 'rect') {
+      // 缩放矩形的尺寸和位置，先转化到原图坐标，在转化到fabric坐标
+      obj.width = obj.width * scale / fabricScale;
+      obj.height = obj.height * scale / fabricScale;
+      obj.left = (obj.left * scale + left) / fabricScale;
+      obj.top = (obj.top * scale + top) / fabricScale;
+  } else if (obj.type === 'path') {
+      // 缩放多边形的点
+      obj.points = obj.points.map(([x, y]) => [(x * scale + left) / fabricScale, (y * scale + top) / fabricScale]);
+  }
+  return obj;
+}
+
+export const convertCoord = (width, height, top, left, inferRes, fabricScale) => {
+  const scale = Math.max(width, height)  //此处width, height, top, left对应的是原图像素
+
+  return inferRes.map(obj => mapObject(obj, scale, top, left, fabricScale));
 }

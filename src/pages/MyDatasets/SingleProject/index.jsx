@@ -12,9 +12,11 @@ import { DeleteOutlined, SmallDashOutlined,AppstoreOutlined } from '@ant-design/
 // @ts-ignore
 import invalidIcon from '@/assets/invalid.png'
 import { useHistory } from 'react-router'
+import { useTranslation } from 'react-i18next'
 
 const SingleProject = ({ projectDetails, deleteProject }) => {
   const history = useHistory()
+  const { t } = useTranslation()
   return (
     <div className={styles.projectWrap}>
       <div style={{ textAlign: 'right', paddingRight: '10px' }}>
@@ -22,10 +24,10 @@ const SingleProject = ({ projectDetails, deleteProject }) => {
           overlay={
             <Menu>
               <Menu.Item danger onClick={() => deleteProject(projectDetails.projectId)}>
-                <DeleteOutlined style={{ color: 'red' }} /> 删除
+                <DeleteOutlined style={{ color: 'red' }} /> {t('ProjectHome.singleProject.delete')}
               </Menu.Item>
               <Menu.Item onClick={() => history.push('/userHome/projects/' + projectDetails.projectId.toString())}>
-                <AppstoreOutlined style={{ color: '#1890ff' }} /> 详情
+                <AppstoreOutlined style={{ color: '#1890ff' }} /> {t('ProjectHome.singleProject.detail')}
               </Menu.Item>
             </Menu>
           }
@@ -36,7 +38,7 @@ const SingleProject = ({ projectDetails, deleteProject }) => {
       <div className={styles.title}>{projectDetails.projectName}</div>
       <div className={styles.desc}>
         <Tag color="purple">
-          {projectDetails.imageType.imageTypeName} {'数据集'}
+          {t('ProjectHome.singleProject.imageType')}
         </Tag>
       </div>
       <div className={styles.btnWrap}>
@@ -46,7 +48,7 @@ const SingleProject = ({ projectDetails, deleteProject }) => {
               pathname: '/userHome/groups/' + projectDetails.projectId,
             }}
           >
-            {'查看'}
+            {t('ProjectHome.singleProject.view')}
           </Link>
         </Button>
       </div>

@@ -14,6 +14,7 @@ import { generatePolygon } from './fabricObjAddEvent'
 import { zoomHandler, animationEndHandler, animationHandler } from './handler'
 import OpenSeadragon from '@/lib/openseadragon-fabricjs-overlay/openseadragon-fabricjs-overlay'
 import { VIcon } from '@/components'
+import { useTranslation } from 'react-i18next';
 // @ts-ignore
 const fabric = window.fabric
 const { TextArea } = Input;
@@ -119,7 +120,7 @@ const CanvasAnnotator = ({
 
   const viewportWidth = window.innerWidth
   const viewportHeight = window.innerHeight
-
+  const { t } = useTranslation()
   const [zooming, setZooming] = useState(false)
   const [viewer, setViewer] = useState(null) // 图片查看器
   // 注册的监听事件为闭包环境，拿不到useState中的最新值，故使用useRef
@@ -274,7 +275,7 @@ const CanvasAnnotator = ({
   useEffect(() => {
     // if (!projectHits || projectHits.length === 0) return
     if (!canvasInstance.current) return
-    setLoadingInfo({ flag: true, text: '图片加载中...' })
+    setLoadingInfo({ flag: true, text: 'loading...' })
     canvasInstance.current.clear()
     canvasInstance.current.setViewportTransform([1, 0, 0, 1, 0, 0])
 
@@ -371,11 +372,11 @@ const CanvasAnnotator = ({
   // 删除某一标注物体
   const deleteBtnClick = () => {
     Modal.confirm({
-      title: '确认',
+      title: t('PathoSpace.deleteAnnotation.title'),
       icon: <ExclamationCircleOutlined />,
-      content: '确定删除该标注吗？',
-      okText: '确认',
-      cancelText: '取消',
+      content: t('PathoSpace.deleteAnnotation.content'),
+      okText: t('PathoSpace.deleteAnnotation.okText'),
+      cancelText: t('PathoSpace.deleteAnnotation.cancelText'),
       onOk: () => {
         const obj = canvasInstance.current.getActiveObject()
         canvasInstance.current.remove(obj).requestRenderAll()
@@ -403,16 +404,16 @@ const CanvasAnnotator = ({
               <div className={styles.ActiveObjCardHeaderShape}>
                 <span style={{backgroundColor: currentActiveObj.color}} className={styles.ActiveObjCardHeaderColor}>
                 </span>
-                <span>{hitShapeTypeLabels[currentActiveObj.shape]}</span>
+                <span>{t(hitShapeTypeLabels[currentActiveObj.shape])}</span>
               </div>
               <div className={styles.ActiveObjCardOperate}>
                 <div className={styles.ActiveObjCardEdit}
-                    title='编辑标注信息'
+                    title={t('PathoSpace.editTagInfo')}
                     onClick={()=>{setIsTagInfModalOpen(true)}}>
                       <VIcon type="icon-edit" style={{ fontSize: '16px' }} />
                 </div>
                 <div className={styles.ActiveObjCardDelete}
-                    title='删除标注区域'
+                    title={t('PathoSpace.deleteTagArea')}
                     onClick={deleteBtnClick}>
                   <VIcon type="icon-delete" style={{ fontSize: '16px' }} />
                 </div>
@@ -422,8 +423,8 @@ const CanvasAnnotator = ({
               <div className={styles.ActiveObjCardTagInfo}>{currentActiveObj.tagInfo}</div>
             )}
             <div>
-              <div>宽度：{(currentActiveObj.width * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
-              <div>长度：{(currentActiveObj.height * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
+              <div>{t('PathoSpace.width')}{(currentActiveObj.width * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
+              <div>{t('PathoSpace.height')}{(currentActiveObj.height * pathoImgInfo.size.width / 1000).toFixed(2)}px</div>
             </div>
           </div>
         </div>}
@@ -432,7 +433,7 @@ const CanvasAnnotator = ({
         <div className={styles.rbLabel}>{`${viewer.viewport.getZoom(true).toFixed(1)}x`}</div>
         <div onClick={() => {
           if(isQuestion){
-            message.warning('提问尚未结束，请框选一个区域！');
+            message.warning(t('PathoSpace.chooseArea'));
             return
           }
           viewer.viewport.goHome()
@@ -443,7 +444,7 @@ const CanvasAnnotator = ({
               key={level.value}
               onClick={() => {
                 if (isQuestion) {
-                  message.warning('提问尚未结束，请框选一个区域！');
+                  message.warning(t('PathoSpace.chooseArea'));
                   return;
                 }
                 setZoom(level.value);
@@ -454,14 +455,14 @@ const CanvasAnnotator = ({
             </div>
           ))}
       </div>}
-      <Modal title="标注信息" 
+      <Modal title={t('PathoSpace.tagList.annotationInfo')}
               visible={isTagInfoModalOpen} 
               onOk={handleTagInfoModalOk} 
               onCancel={()=>{setIsTagInfModalOpen(false)}} 
               destroyOnClose
-              okText="保存"
-              cancelText="取消">
-          <TextArea placeholder="请输入100字以内标注内容" 
+              okText={t('PathoSpace.tagList.save')}
+              cancelText={t('PathoSpace.tagList.cancel')}>
+          <TextArea placeholder={t('PathoSpace.tagList.annotationInfoInput')}
                     showCount 
                     maxLength={100} 
                     onChange={handelInfoValueChange}

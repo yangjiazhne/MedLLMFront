@@ -21,9 +21,18 @@ const Navbar = () => {
 
   const { t, i18n } = useTranslation();
 
-  useEffect(( ) => {
+  // 从 localStorage 加载保存的语言设置
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') || 'zh'; // 默认语言为中文
+    setLanguage(savedLanguage);
+    i18n.changeLanguage(savedLanguage);
+  }, [i18n]);
+
+  // 每当语言变化时，更新 localStorage
+  useEffect(() => {
+    localStorage.setItem('language', language);
     i18n.changeLanguage(language);
-  }, [language])
+  }, [language, i18n]);
 
   useEffect(() => {
     const token = window.sessionStorage.getItem('token')
@@ -39,8 +48,10 @@ const Navbar = () => {
 
   const logout = () => {
     Modal.confirm({
-      title: '提示',
-      content: '确定要退出登录吗',
+      title: t('Logout.title'),
+      content: t('Logout.content'),
+      okText: t('Logout.okText'),
+      cancelText: t('Logout.cancelText'),
       onOk: () => logOut(history),
     })
   }
@@ -55,16 +66,45 @@ const Navbar = () => {
         {/*<ArrowLeftOutlined className={styles.backIcon} onClick={history.goBack} />*/}
         <div className={styles.navbarTitleWrap}>
           <img src={Icon}/>
-          <span className={styles.navbarTitle}>{t("title")}</span>
+          <span className={styles.navbarTitle}>{t("Navbar.title")}</span>
+        </div>
+      </div>      
+      <div className={styles.navbarMenu}>
+        {/*<div className={styles.navbarMenuItem} visible={false}>*/}
+      {/*  <Dropdown*/}
+      {/*    visible={false}*/}
+      {/*    overlay={*/}
+      {/*      <Menu>*/}
+      {/*        <Menu.Item onClick={() => setLanguage('zh')}>中文</Menu.Item>*/}
+      {/*        <Menu.Item onClick={() => setLanguage('en')}>English</Menu.Item>*/}
+      {/*      </Menu>*/}
+      {/*    }*/}
+      {/*  >*/}
+      {/*    <span >*/}
+      {/*      {t('language')}*/}
+      {/*      <DownOutlined style={{ marginLeft: '5px' }} />*/}
+      {/*    </span>*/}
+      {/*  </Dropdown>*/}
+      {/*</div>*/}
+        <div className={styles.navbarMenuItem}>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item onClick={() => setLanguage('zh')}>中文</Menu.Item>
+                <Menu.Item onClick={() => setLanguage('en')}>English</Menu.Item>
+              </Menu>
+            }
+          >
+            <span >
+              {t("Navbar.language")}
+              <DownOutlined style={{ marginLeft: '5px' }}/>
+            </span>
+          </Dropdown>
+        </div>
+        <div className={styles.navbarMenuItem}>
+          {isLogin && (<div onClick={logout}>{t("Navbar.logout")}</div>)}
         </div>
       </div>
-      {isLogin && (      
-        <div className={styles.navbarMenu}>
-          <div className={styles.navbarMenuItem}>
-            {isLogin && (<div onClick={logout}>退出登录</div>)}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

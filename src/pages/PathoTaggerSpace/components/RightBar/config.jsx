@@ -25,27 +25,27 @@ export const controls = [
 export const colors = [
   {
     value: '#ff0000',
-    label: '红色',
+    label: 'PathoSpace.tagList.red',
   },
   {
     value: '#00ff00',
-    label: '绿色',
+    label: 'PathoSpace.tagList.green',
   },
   {
     value: '#0000ff',
-    label: '深蓝',
+    label: 'PathoSpace.tagList.deepBlue',
   },
   {
     value: '#ffff00',
-    label: '黄色',
+    label: 'PathoSpace.tagList.yellow',
   },
   {
     value: '#ffa500',
-    label: '橙色',
+    label: 'PathoSpace.tagList.orange',
   },
   {
     value: '#00ffff',
-    label: '浅蓝',
+    label: 'PathoSpace.tagList.LightBlue',
   },
 ]
 
@@ -53,26 +53,26 @@ export const shapes = [
   {
     value: hitShapeTypes.RECT,
     icon: <VIcon type="icon-rect" style={{ fontSize: '18px' }} />,
-    title: '绘制矩形框',
-    label: '矩形',
+    title: 'PathoSpace.tagList.rectTitle',
+    label: 'PathoSpace.tagList.rect',
   },
   {
     value: hitShapeTypes.POLYGON,
     icon: <VIcon type="icon-polygon" style={{ fontSize: '18px' }} />,
-    title: '绘制多边形框',
-    label: '多边形',
+    title: 'PathoSpace.tagList.polygonTitle',
+    label: 'PathoSpace.tagList.polygon',
   },
   {
     value: hitShapeTypes.ELLIPSE,
     icon: <VIcon type="icon-ellipse" style={{ fontSize: '18px' }} />,
-    title: '绘制椭圆形框',
-    label: '椭圆形',
+    title: 'PathoSpace.tagList.ellipseTitle',
+    label: 'PathoSpace.tagList.ellipse',
   },
   {
     value: hitShapeTypes.POLYGONPATH,
     icon: <VIcon type="icon-ManagePaths" style={{ fontSize: '18px' }} />,
-    title: '绘制自由路径',
-    label: '自由路径',
+    title: 'PathoSpace.tagList.pathTitle',
+    label: 'PathoSpace.tagList.path',
   },
 ]
 

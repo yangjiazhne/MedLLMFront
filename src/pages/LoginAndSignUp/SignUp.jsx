@@ -2,11 +2,12 @@ import React, { useState } from 'react'
 import { Form, Input, Button, message, Modal } from 'antd'
 import styles from './index.module.scss'
 import { userRegister } from '@/request/actions/user'
+import { useTranslation } from 'react-i18next';
 
 const SignUp = ({ goToLogin }) => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-
+  const { t, i18n } = useTranslation();
   // 用户注册
   const onFinish = async values => {
     setLoading(true)
@@ -15,7 +16,7 @@ const SignUp = ({ goToLogin }) => {
 
     setLoading(false)
     if (!res.err) Modal.success({
-      title: '注册成功', 
+      title: t('Signup.registerSuccess'), 
       content: res.data.msg,
       onOk: () => {goToLogin()}
      })
@@ -23,36 +24,36 @@ const SignUp = ({ goToLogin }) => {
   }
   return (
     <>
-      <div className={styles.title}>&nbsp;注册</div>
+      <div className={styles.title} style={{letterSpacing: i18n.language === 'en' ? '5px' : '20px'}}>&nbsp;{t('Signup.title')}</div>
       <Form onFinish={onFinish} form={form} style={{width: '100%'}} className={styles.customForm}>
         <div className={styles.formInputItem}>
-          <span>用户名</span>
+          <span>{t('Signup.username')}</span>
           <Form.Item
             name="username"
             className={styles.antFormItem}
             rules={[
               {
                 required: true,
-                message: '请输入用户名!',
+                message: t('Signup.usernameRequired'),
               },
             ]}
           >
-            <Input placeholder="输入您的用户名"/>
+            <Input placeholder={t('Signup.usernameRequired')}/>
           </Form.Item>
         </div>
         <div className={styles.formInputItem}>
-          <span>邮箱</span>
+          <span>{t('Signup.email')}</span>
           <Form.Item
             name="email"
             className={styles.antFormItem}
             rules={[
               {
                 type: 'email',
-                message: '请输入合法的邮箱地址!',
+                message: t('Signup.emailInvalid'),
               },
               {
                 required: true,
-                message: '请输入你的邮箱地址!',
+                message: t('Signup.emailRequired'),
               },
             ]}
           >
@@ -60,44 +61,44 @@ const SignUp = ({ goToLogin }) => {
           </Form.Item>
         </div>
         <div className={styles.formInputItem}>
-          <span>密码</span>
+          <span>{t('Signup.password')}</span>
           <Form.Item
             name="password"
             className={styles.antFormItem}
             rules={[
               {
                 required: true,
-                message: '请输入你的密码!',
+                message: t('Signup.passwordRequired'),
               },
             ]}
           >
-            <Input type="password" placeholder="请输入密码"/>
+            <Input type="password" placeholder={t('Signup.passwordRequired')}/>
           </Form.Item>
         </div>
         <div className={styles.formInputItem}>
-          <span>电话号码</span>
+          <span>{t('Signup.phone')}</span>
           <Form.Item
             name="phone"
             className={styles.antFormItem}
           >
-            <Input placeholder="可选"/>
+            <Input placeholder={t('Signup.phonePlaceholder')}/>
           </Form.Item>
         </div>
         <div className={styles.formInputItem}>
-          <span>主页地址</span>
+          <span>{t('Signup.profileLink')}</span>
           <Form.Item
             name="profilelink"
             className={styles.antFormItem}
           >
-            <Input placeholder="可选"/>
+            <Input placeholder={t('Signup.profileLinkPlaceholder')}/>
           </Form.Item>
         </div>
         <div className={styles.formBtnItem}>
           <Button onClick={goToLogin} className={"success-btn " + styles.subBtn}>
-            返回登录
+            {t('Signup.goToLogin')}
           </Button>
           <Button loading={loading} type="primary" htmlType="submit" style={{width:'100%'}}>
-            注册
+            {t('Signup.signupButton')}
           </Button>
         </div>
       </Form>

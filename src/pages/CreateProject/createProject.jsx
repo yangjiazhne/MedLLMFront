@@ -10,11 +10,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux'
 import { useHistory } from 'react-router'
 import { logOut } from '@/helpers/Utils'
-
-// 图片类型选择框
-const options = [
-  { label: '病理图(.mrxs, .tif)', value: 1 },
-]
+import { useTranslation } from 'react-i18next'
 
 const CreateProjectView = () => {
   let { id: projectId } = useQuery()
@@ -27,6 +23,11 @@ const CreateProjectView = () => {
     // @ts-ignore
     state => state.user
   )
+  const { t, i18n } = useTranslation()
+  // 图片类型选择框
+  const options = [
+    { label: `${t('ProjectHome.createProject.mrxs')} (.mrxs, .tif)`, value: 1 },
+  ]
 
   const fetchData = async () => {
     if (projectId) {
@@ -34,8 +35,8 @@ const CreateProjectView = () => {
       const result = await searchProject(projectId)
       if(result.err){
         Modal.error({
-          title: '提示',
-          content: '您的登录已过期，请重新登陆',
+          title: t('LoginExpired.title'),
+          content: t('LoginExpired.content'),
           onOk: () => logOut(history),
         })
       }
@@ -66,8 +67,8 @@ const CreateProjectView = () => {
     
     if((matchingProject && matchingProject.length !== 0 && !projectId) || (matchingProject && matchingProject.length !== 0 && projectId && matchingProject[0].projectId.toString() !== projectId)){
       Modal.error({
-        title: '该数据集名称已存在！',
-        content: '请更换一个数据集名称',
+        title: t('ProjectHome.createProject.projectExistTitle'),
+        content: t('ProjectHome.createProject.projectExistContent'),
       });
       return
     }
@@ -88,10 +89,10 @@ const CreateProjectView = () => {
       }])
     }
     setUploading(false)
-    if (res.err) message.error(res?.data || '创建失败')
+    if (res.err) message.error(res?.data || t('ProjectHome.createProject.error'))
     else {
       Modal.success({
-        content: '信息提交成功',
+        content: t('ProjectHome.createProject.success'),
         onOk: () => {
           if (projectId) {
             history.push('/userHome/projects/' + projectId.toString())
@@ -106,7 +107,7 @@ const CreateProjectView = () => {
 
   return (
     <div style={{ margin: 'auto', width: '600px', textAlign: 'center' }}>
-      <h1 style={{ marginBottom: '50px' }}>{projectId ? '编辑' : '创建'}数据集</h1>
+      <h1 style={{ marginBottom: '50px' }}>{projectId ? t('ProjectHome.createProject.edit') : t('ProjectHome.createProject.create')}{t('ProjectHome.createProject.project')}</h1>
       <Form
         form={form}
         layout="vertical"
@@ -115,24 +116,24 @@ const CreateProjectView = () => {
         onFinish={onFinish}
       >
         <Form.Item
-          label="数据集名称"
+          label={t('ProjectHome.createProject.title')}
           name="project_name"
           rules={[
             {
               required: true,
-              message: '必须填写数据集名称',
+              message: t('ProjectHome.createProject.nameRequired'),
             },
           ]}
         >
-          <Input placeholder="汽车/动物 框选数据集" />
+          <Input placeholder= {t('ProjectHome.createProject.nameInput')} />
         </Form.Item>
         <Form.Item
-          label="图片类型"
+          label={t('ProjectHome.createProject.imageType')}
           name="imageType"
           rules={[
             {
               required: true,
-              message: '必须选择图片类型',
+              message: t('ProjectHome.createProject.imageTypeRequired'),
             },
           ]}
         >
@@ -152,18 +153,18 @@ const CreateProjectView = () => {
             ></Select>)}
         </Form.Item>
         <Form.Item
-          label="数据集简介"
+          label={t('ProjectHome.createProject.description')}
           name="instructions"
           rules={[
             {
               required: true,
-              message: '必须填写数据集简介',
+              message: t('ProjectHome.createProject.descriptionRequired'),
             },
           ]}
         >
           <Input.TextArea
             rows={5}
-            placeholder="汽车物体矩形框选数据集，包含汽车的矩形框标注，用于汽车识别。"
+            placeholder={t('ProjectHome.createProject.descInput')}
           />
         </Form.Item>
       </Form>
@@ -175,7 +176,7 @@ const CreateProjectView = () => {
           justifyContent: 'center',
         }}
       >
-        <Spin spinning={uploading} tip={'项目正在创建中...'} style={{ margin: '20px auto' }}>
+        <Spin spinning={uploading} tip={t('ProjectHome.createProject.creating')} style={{ margin: '20px auto' }}>
           <Button type="default" onClick={() =>{
             if(projectId){
               history.push('/userHome/projects/' + projectId.toString())
@@ -184,10 +185,10 @@ const CreateProjectView = () => {
             }
           }} disabled={uploading}
                   style={{marginRight:'40px'}}>
-            返回
+            {t('ProjectHome.createProject.back')}
           </Button>
           <Button type="primary" onClick={() => form.submit()} disabled={uploading}>
-            提交
+            {t('ProjectHome.createProject.submit')}
           </Button>
         </Spin>
       </div>

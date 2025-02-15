@@ -21,7 +21,7 @@ const HitImage = ({ hitDetail, projectId }) => {
         <div className={styles.imgContainer}>
         <div className={styles.imgWrap}>
             <Image
-              src={`/uploads/${projectId}/${hitDetail.imageId}/deepzoom/imgs/10/0_0.jpeg`}
+              src={`/uploads/${projectId}/${hitDetail.imageId}/deepzoom/imgs/9/0_0.jpeg`}
               fallback={imgError}
               style={{ height: '130px', width: '130px'}}
             />
@@ -255,7 +255,7 @@ const ImgMoveForm = ({open, onOk, onCancel, dispatch, projectId}) => {
                                     <Checkbox value={hit.imageId} style={{alignItems: 'center'}}>
                                         <div style={{display:'flex', alignItems: 'center'}}>
                                             <Image
-                                                src={`/uploads/${projectId}/${hit.imageId}/deepzoom/imgs/10/0_0.jpeg`}
+                                                src={`/uploads/${projectId}/${hit.imageId}/deepzoom/imgs/9/0_0.jpeg`}
                                                 fallback={imgError}
                                                 preview={{ mask: null }}
                                                 style={{ height: '40px', width: '40px', marginLeft: '8px', marginRight: '8px'}}

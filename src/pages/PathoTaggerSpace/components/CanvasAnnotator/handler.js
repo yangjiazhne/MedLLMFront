@@ -28,14 +28,14 @@ export const zoomHandler = (event, dispatch, setZooming, setPosition) => {
   // 根据当前放大倍数,调整图形属性
   var zoom = event.zoom
   if (zoom) {
-    const radius = 1 / zoom
+    const radius = 2 / zoom
     dispatch({
       type: 'UPDATE_CIRCLERADIUS',
       payload: radius,
     })
 
     // 调整边框和自由划线的线宽
-    const strokeWidth = 1 / zoom
+    const strokeWidth = 2 / zoom
     dispatch({
       type: 'UPDATE_STROKEWIDTH',
       payload: strokeWidth,

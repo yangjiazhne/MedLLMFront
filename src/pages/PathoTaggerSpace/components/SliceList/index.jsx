@@ -173,7 +173,7 @@ const SliceList = ({setShowSliceList, setSearchValue, currentPage, setCurrentPag
                                                          color: `${currentImage?.imageId === image.imageId  ? '#fff' : '#25b0e5'}`}}
                                                  onClick={()=>{changeImage(image)}}>
                                                 <Image
-                                                    src={`/uploads/${projectId}/${image.imageId}/deepzoom/imgs/10/0_0.jpeg`}
+                                                    src={`/uploads/${projectId}/${image.imageId}/deepzoom/imgs/9/0_0.jpeg`}
                                                     fallback={imgError}
                                                     preview={false}
                                                     style={{ height: '64px', width: '64px'}}

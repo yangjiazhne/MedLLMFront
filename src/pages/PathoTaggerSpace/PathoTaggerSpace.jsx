@@ -301,7 +301,7 @@ const PathoTaggerSpace = () => {
 
       let subscription;
       
-      const taskId = `medllm_dev_pathology_image_convert_${currentImage.imageId}`
+      const taskId = `medllm_pathology_image_convert_${currentImage.imageId}`
 
       // 连接到 WebSocket 服务器
       stompClient.connect({}, frame => {
@@ -527,7 +527,7 @@ const PathoTaggerSpace = () => {
     const scale = 1000 / pathoImgInfo.size.width
 
     if(res.data.visualResult.length > 0){
-      renderModelInfer(res.data.visualResult, scale, "#9bcd45", dispatch)
+      renderModelInfer(res.data.visualResult, scale, "#00FF00", dispatch)
     }
 
   }
@@ -590,11 +590,11 @@ const PathoTaggerSpace = () => {
     const scale = 1000 / pathoImgInfo.size.width
 
     if(message.region.height !== Number(pathoImgInfo.size.height) && message.region.width !== Number(pathoImgInfo.size.width)){
-      renderModelInfer([message.region], scale, "#fa1313", dispatch)
+      renderModelInfer([message.region], scale, "#00FF00", dispatch)
     }
 
     if(message.visualResult.length > 0){
-      renderModelInfer(message.visualResult, scale, "#9bcd45", dispatch)
+      renderModelInfer(message.visualResult, scale, "#00FF00", dispatch)
     }
   }
 
@@ -620,7 +620,7 @@ const PathoTaggerSpace = () => {
     const scale = 1000 / pathoImgInfo.size.width
 
     if(res.data.visualResult.length > 0){
-      renderModelInfer(res.data.visualResult, scale, "#9bcd45", dispatch)
+      renderModelInfer(res.data.visualResult, scale, "#00FF00", dispatch)
     }
 
   }
